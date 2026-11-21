@@ -1,0 +1,15 @@
+[Icon Theme]
+Name=Thumbs & Paws
+Comment=One Man Nine Lives icons: warm tabby folders with cat ears. Anything not drawn yet comes from Breeze.
+Inherits=breeze,hicolor
+Example=folder
+DisplayDepth=32
+FollowsColorScheme=true
+Directories=places/scalable
+
+[places/scalable]
+Size=64
+MinSize=16
+MaxSize=512
+Type=Scalable
+Context=Places
