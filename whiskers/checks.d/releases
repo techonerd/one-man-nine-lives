@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Bring-your-own release watch: tools you build or install yourself, checked against their GitHub releases.
+. "${WHISKERS_LIB:?}/common.sh"
+LIST=${WHISKERS_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/whiskers}/releases.conf
+DESCRIBE=$(jq -nc --arg list "$LIST" '{name:"Self-built tools",
+  description:"Tells you when a new release is out for tools you build or install yourself (for example asusctl). Add your own in the list.",
+  applies:true, default_enabled:true,
+  options:[{key:"list", type:"file", default:$list, label:"Watched tools"}]}')
+
+run() {
+  [[ -r $LIST ]] || return 0
+  # Only trust a list that you own and nobody else can write to, because it contains commands
+  if [[ $(stat -c %u "$LIST") != "$(id -u)" ]] || [[ $(stat -c %A "$LIST") == ?????w* || $(stat -c %A "$LIST") == ????????w? ]]; then
+    emit releases error "Release list ignored" "$LIST must be owned by you and not writable by others." "chmod go-w $LIST"; return
+  fi
+  local name="" repo="" installed="" update="" line k v
+  flush() {
+    [[ -n $name && -n $repo && -n $installed ]] || return 0
+    local cache=$WHISKERS_STATE/${repo//\//_} age=999999 latest inst
+    [[ -f $cache ]] && age=$(( $(date +%s) - $(stat -c %Y "$cache") ))
+    if (( age > 12 * 3600 )); then
+      latest=$(curl -fsS -m 10 -A "whiskers" -H 'Accept: application/vnd.github+json' \
+               "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null | jq -r '.tag_name // empty' 2>/dev/null)
+      [[ -n $latest ]] && printf '%s\n' "$latest" > "$cache"
+    fi
+    latest=$(head -n 1 "$cache" 2>/dev/null)
+    inst=$(timeout 10 bash -c "$installed" 2>/dev/null | head -n 1 | tr -d '[:space:]')
+    if [[ -z $inst ]]; then
+      emit "release:$name" info "$name: can't tell which version you have" "The \"installed\" command in the list printed nothing." "Edit the list"
+    elif [[ -z $latest ]]; then
+      emit "release:$name" ok "$name $inst" "Couldn't reach GitHub to look for a newer release; will try again later."
+    elif [[ ${latest#v} != "${inst#v}" && $(printf '%s\n%s\n' "${latest#v}" "${inst#v}" | sort -V | tail -n 1) == "${latest#v}" ]]; then
+      emit "release:$name" warn "$name $latest is out" "You have $inst. Read the release notes before updating." \
+        "${update//\{latest\}/$latest}" "https://github.com/$repo/releases/tag/$latest"
+    else
+      emit "release:$name" ok "$name is up to date" "You have $inst, the latest release."
+    fi
+  }
+  while IFS= read -r line || [[ -n $line ]]; do
+    line=${line%$'\r'}
+    [[ $line =~ ^[[:space:]]*(#|$) ]] && continue
+    if [[ $line =~ ^\[(.+)\]$ ]]; then flush; name=${BASH_REMATCH[1]} repo="" installed="" update=""; continue; fi
+    k=${line%%=*}; v=${line#*=}; k=${k//[[:space:]]/}; v=${v#"${v%%[![:space:]]*}"}
+    case $k in repo) repo=$v ;; installed) installed=$v ;; update) update=$v ;; esac
+  done < "$LIST"
+  flush
+}
+plugin_main "$@"

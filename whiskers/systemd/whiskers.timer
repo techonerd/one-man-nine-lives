@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Whiskers checks shortly after login and then periodically
+
+[Timer]
+OnStartupSec=3min
+# Interval is set by "whiskers config set interval_hours N" (drop-in whiskers.timer.d/interval.conf)
+OnUnitActiveSec=4h
+AccuracySec=5min
+
+[Install]
+WantedBy=timers.target

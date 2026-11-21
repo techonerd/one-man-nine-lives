@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Background services: failed units, plus services the user says must always run.
+. "${WHISKERS_LIB:?}/common.sh"
+DESCRIBE='{"name":"Background services","description":"Tells you when a system or user service stops working, and makes sure the services you rely on are running.","applies":true,"default_enabled":true,
+ "options":[{"key":"must_run","type":"string","default":"","label":"Must always run","placeholder":"e.g. asusd NetworkManager"}]}'
+
+report_failed() { # scope(--system|--user)
+  local scope=$1 u desc last who=""
+  [[ $scope == --user ]] && who="user "
+  while read -r u; do
+    [[ -z $u ]] && continue
+    desc=$(systemctl "$scope" show -p Description --value "$u" 2>/dev/null)
+    last=$(journalctl "$scope" -b -u "$u" -p warning -n 1 --no-pager -o cat 2>/dev/null | tail -n 1)
+    emit "service:$u" error "${desc:-$u} stopped working" \
+      "The ${who}service $u failed${last:+ with: \"$last\"}. Anything that depends on it may not work until it is fixed." \
+      "systemctl $scope status $u    # then: journalctl $scope -b -u $u -n 50"
+    found=1
+  done < <(systemctl "$scope" --failed --no-legend --plain 2>/dev/null | awk '{print $1}')
+}
+
+run() {
+  found=0
+  report_failed --system
+  report_failed --user
+  local u state desc
+  for u in $(opt must_run ""); do
+    [[ $u == *.* ]] || u=$u.service
+    systemctl cat "$u" >/dev/null 2>&1 || { emit "must-run:$u" info "$u not found" "You asked Whiskers to watch $u, but no such service is installed." "Remove it from \"Must always run\""; continue; }
+    state=$(systemctl is-active "$u" 2>/dev/null)
+    [[ $state == active || $state == failed ]] && continue   # failed is already reported above
+    desc=$(systemctl show -p Description --value "$u" 2>/dev/null)
+    emit "must-run:$u" warn "${desc:-$u} isn't running" \
+      "You asked Whiskers to make sure $u always runs, but it is $state." "sudo systemctl start $u"
+    found=1
+  done
+  (( found )) || emit services ok "Background services" "Everything is running normally."
+}
+plugin_main "$@"

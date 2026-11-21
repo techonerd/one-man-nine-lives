@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Android emulator Quick Boot "file-backed RAM": mirrors the virtual phone's memory to the SSD all the time.
+. "${WHISKERS_LIB:?}/common.sh"
+DESCRIBE='{"name":"Android emulator","description":"Warns when the Android emulator is mirroring its memory onto your SSD, which wears it out and slows everything down.","applies":'"$([[ -d $HOME/.android ]] && echo true || echo false)"',"default_enabled":true,"options":[]}'
+FIX="Close the emulator, then: grep -q QuickbootFileBacked ~/.android/advancedFeatures.ini 2>/dev/null || echo 'QuickbootFileBacked = off' >> ~/.android/advancedFeatures.ini"
+
+run() {
+  local pid avd hit=0
+  for pid in $(pgrep -u "$(id -u)" qemu-system 2>/dev/null); do
+    grep -qE ' rw-s .*snapshots/[^ ]*/ram\.img' "/proc/$pid/maps" 2>/dev/null || continue
+    avd=$(grep -oE '[^/]+\.avd' "/proc/$pid/maps" 2>/dev/null | head -n 1); avd=${avd%.avd}; hit=1
+    emit "emulator:$pid" warn "The Android emulator is wearing out your SSD" \
+      "${avd:-The virtual device} keeps a live copy of its memory on disk (Quick Boot file-backed RAM), which can write hundreds of GB per hour." "$FIX"
+  done
+  (( hit )) && return
+  if grep -qiE '^[[:space:]]*QuickbootFileBacked[[:space:]]*=[[:space:]]*off' "$HOME/.android/advancedFeatures.ini" 2>/dev/null; then
+    emit emulator ok "Android emulator" "Set up to keep its memory in RAM, not on disk."
+  else
+    emit emulator info "Android emulator setting" "Quick Boot file-backed RAM is on, so the next emulator run will write heavily to your SSD." "${FIX#Close the emulator, then: }"
+  fi
+}
+plugin_main "$@"

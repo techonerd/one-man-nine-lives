@@ -1,0 +1,9 @@
+[Unit]
+Description=Whiskers system watch (One Man Nine Lives)
+Documentation=https://github.com/techonerd/one-man-nine-lives
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/whiskers check
+Nice=10
+IOSchedulingClass=idle

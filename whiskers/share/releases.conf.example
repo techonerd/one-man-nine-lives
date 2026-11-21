@@ -1,0 +1,13 @@
+# Whiskers: tools you build or install yourself, checked against their latest GitHub release.
+# One block per tool:
+#   [name]
+#   repo      = owner/repository on GitHub
+#   installed = shell command that prints the version you have now
+#   update    = (optional) command shown to you when a new release is out; {latest} = new tag
+# Whiskers never runs "update" itself; it only shows it to you.
+#
+# Example:
+# [asusctl]
+# repo      = OpenGamingCollective/asusctl
+# installed = sed -n 's/^version *= *"\(.*\)"/\1/p' ~/asusctl/Cargo.toml | head -n 1
+# update    = rustup update && cd ~/asusctl && git fetch --tags && git checkout {latest} && make && sudo make install && sudo systemctl restart asusd

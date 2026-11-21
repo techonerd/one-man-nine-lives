@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Whiskers
+GenericName=System Watch
+Comment=Senses trouble before it lands
+Exec=konsole --hold -e whiskers status
+Icon=whiskers
+Terminal=false
+Categories=System;Monitor;
+Keywords=health;monitor;disk;services;updates;
+X-KDE-StartupNotify=false

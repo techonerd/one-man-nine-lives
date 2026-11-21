@@ -1,0 +1,24 @@
+# Friendly names used in Whiskers messages.  process-name <TAB> friendly name <TAB> what it means for you
+# Add your own in ~/.config/whiskers/names.tsv (same format; yours win).
+kwin_wayland	The desktop compositor (KWin)	Your screen may have frozen or gone black for a moment; open windows normally come back.
+kwin_x11	The window manager (KWin)	Window borders may have vanished for a moment.
+plasmashell	The Plasma desktop and panel	The panel and wallpaper restart by themselves in a few seconds.
+kscreenlocker_greet	The lock screen	It reloads automatically; just unlock again.
+kscreenlocker_g	the lock screen
+ksmserver	The session manager	You may be logged out; save your work.
+sddm-greeter-qt6	The login screen	It restarts on its own.
+Xwayland	XWayland (older X11 apps)	X11 apps such as some games or Java apps may have closed.
+pipewire	The audio system (PipeWire)	Sound may stop until it restarts.
+wireplumber	The audio session manager	Speakers or headphones may not switch correctly.
+NetworkManager	The network manager	Wi-Fi or Ethernet may disconnect.
+asusd	The ASUS control daemon	Fan profiles, keyboard lighting and battery limit may stop working.
+rog-control-cen	ROG Control Center
+brave	Brave	Your tabs can be restored from the History menu.
+firefox-esr	Firefox	Your tabs can be restored on next start.
+qemu-system-x86	The Android emulator	Restart the virtual device from Android Studio.
+studio	Android Studio
+java	A Java app (e.g. Android Studio or Gradle)
+powerdevil	Plasma power management	Brightness keys and sleep timers may not work until it restarts.
+antigravity-ide	Antigravity IDE	Its extension helper restarts by itself; if the window went blank, reload it (Ctrl+Shift+P > Reload Window).
+antigravity	Antigravity	Reopen it; your agent conversations are saved.
+code	VS Code	Its extension helper restarts by itself; if the window went blank, reload it.

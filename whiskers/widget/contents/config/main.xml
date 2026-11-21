@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <!-- Widget-only setting. Everything else lives in ~/.config/whiskers/whiskers.conf and is edited through the whiskers CLI. -->
+    <entry name="refresh_minutes" type="Int"><default>15</default></entry>
+  </group>
+</kcfg>

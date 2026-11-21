@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Apps that crashed recently (systemd-coredump).
+. "${WHISKERS_LIB:?}/common.sh"
+DESCRIBE='{"name":"Crashes","description":"Lists apps that crashed recently, in plain words, and points out ones that keep crashing.","applies":'"$(command -v coredumpctl >/dev/null && echo true || echo false)"',"default_enabled":true,
+ "options":[{"key":"window_hours","type":"int","default":24,"min":1,"max":168,"label":"Look back","unit":"hours"},
+            {"key":"repeat_warn","type":"int","default":3,"min":2,"max":50,"label":"Warn when one app crashes","unit":"times"}]}'
+
+run() {
+  local list; list=$(coredumpctl --json=short list --since="-$(opt window_hours 24)h" --no-pager 2>/dev/null) || list="[]"
+  [[ -z $list ]] && list="[]"
+  local total; total=$(jq 'length' <<<"$list" 2>/dev/null || echo 0)
+  if (( total == 0 )); then emit crashes ok "Crashes" "No app crashed in the last $(opt window_hours 24) hours."; return; fi
+  local parts=() worst="" worstn=0 n exe name
+  while read -r n exe; do
+    name=$(friendly_name "$(basename "$exe")")
+    parts+=("$name ($n×)")
+    (( n > worstn )) && { worstn=$n; worst=$name; }
+  done < <(jq -r 'group_by(.exe) | map([length, .[0].exe]) | sort_by(-.[0]) | .[] | "\(.[0]) \(.[1])"' <<<"$list")
+  local summary; summary="In the last $(opt window_hours 24) hours: $(IFS=';'; echo "${parts[*]}" | sed 's/;/, /g')."
+  if (( worstn >= $(opt repeat_warn 3) )); then
+    emit crashes warn "$worst keeps crashing" "$summary Something is wrong with it rather than a one-off glitch." "coredumpctl list --since=-$(opt window_hours 24)h"
+  else
+    emit crashes info "Recent crashes" "$summary" "coredumpctl list --since=-$(opt window_hours 24)h"
+  fi
+}
+plugin_main "$@"

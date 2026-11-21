@@ -1,0 +1,15 @@
+[Unit]
+Description=Whiskers live watch - explains crashes, failed services and sleep problems as they happen
+Documentation=https://github.com/techonerd/one-man-nine-lives
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/whiskers watch
+Restart=on-failure
+RestartSec=15
+Nice=10
+IOSchedulingClass=idle
+MemoryMax=64M
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,432 @@
+#!/usr/bin/env bash
+# Whiskers - senses trouble before it lands.
+# Turns what your system logs and measures into plain-language alerts: what happened,
+# what it means for you, and what to do. It reports; it never changes your system.
+# Part of the One Man Nine Lives suite.  SPDX-License-Identifier: GPL-3.0-or-later
+set -uo pipefail
+export LC_ALL=C
+
+VERSION=1.0.0
+HERE=$(dirname "$(readlink -f "$0")")
+if [[ -d $HERE/../checks.d ]]; then ROOT=$(readlink -f "$HERE/..")          # running from the source tree
+else ROOT=${XDG_DATA_HOME:-$HOME/.local/share}/whiskers; fi                # installed
+export WHISKERS_LIB=$ROOT/lib
+export WHISKERS_CONFIG_DIR=${WHISKERS_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/whiskers}
+STATE_DIR=${WHISKERS_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/whiskers}
+CONF=$WHISKERS_CONFIG_DIR/whiskers.conf
+EVENTS=$STATE_DIR/events.jsonl
+UNIT_DIR=${WHISKERS_UNIT_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user}
+MAX_SINGLE_NOTIFICATIONS=3
+
+# ================================================================ config (INI, parsed - never sourced)
+GENERAL_KEYS=(notify live interval_hours remind_hours)
+declare -A CFG=([general.notify]=true [general.live]=true [general.interval_hours]=4 [general.remind_hours]=24)
+
+valid_general() { # key value
+  case $1 in
+    notify|live) [[ $2 == true || $2 == false ]] ;;
+    interval_hours) [[ $2 =~ ^[0-9]+$ ]] && (( $2 >= 1 && $2 <= 48 )) ;;
+    remind_hours) [[ $2 =~ ^[0-9]+$ ]] && (( $2 >= 1 && $2 <= 168 )) ;;
+    *) return 1 ;;
+  esac
+}
+
+load_config() {
+  [[ -r $CONF ]] || return 0
+  local line sec=general k v
+  while IFS= read -r line || [[ -n $line ]]; do
+    line=${line%$'\r'}
+    [[ $line =~ ^[[:space:]]*([#\;]|$) ]] && continue
+    if [[ $line =~ ^[[:space:]]*\[([a-z0-9_-]+)\][[:space:]]*$ ]]; then sec=${BASH_REMATCH[1]}; continue; fi
+    [[ $line == *=* ]] || continue
+    k=${line%%=*}; v=${line#*=}
+    k=${k//[[:space:]]/}; v=${v#"${v%%[![:space:]]*}"}; v=${v%"${v##*[![:space:]]}"}
+    [[ $k =~ ^[a-z0-9_]+$ ]] || continue
+    if [[ $sec == general ]]; then valid_general "$k" "$v" && CFG[general.$k]=$v
+    else CFG[$sec.$k]=$v; fi
+  done < "$CONF"
+}
+
+save_config() {
+  mkdir -p "$WHISKERS_CONFIG_DIR"
+  local tmp k s; tmp=$(mktemp "$WHISKERS_CONFIG_DIR/.whiskers.conf.XXXXXX") || return 1
+  {
+    echo "# Whiskers settings. Edit here, with 'whiskers config set SECTION.KEY VALUE', or in the widget."
+    echo "[general]"
+    for k in "${GENERAL_KEYS[@]}"; do echo "$k = ${CFG[general.$k]}"; done
+    for s in $(printf '%s\n' "${!CFG[@]}" | grep -v '^general\.' | cut -d. -f1 | sort -u); do
+      echo; echo "[$s]"
+      for k in $(printf '%s\n' "${!CFG[@]}" | grep "^$s\." | sort); do echo "${k#"$s".} = ${CFG[$k]}"; done
+    done
+  } > "$tmp" && mv -f "$tmp" "$CONF"
+}
+
+# ================================================================ plugins
+declare -A PLUGIN=() DESC=()
+UNTRUSTED=()
+trusted() { # only run files owned by you or root that nobody else can modify
+  local o m; o=$(stat -c %u "$1") m=$(stat -c %A "$1")
+  [[ ($o == "$(id -u)" || $o == 0) && ${m:5:1} != w && ${m:8:1} != w ]]
+}
+discover() {
+  local d f id
+  for d in "$ROOT/checks.d" "$WHISKERS_CONFIG_DIR/checks.d"; do   # yours override bundled ones with the same name
+    [[ -d $d ]] || continue
+    for f in "$d"/*; do
+      id=${f##*/}
+      [[ -f $f && -x $f && $id =~ ^[a-z0-9][a-z0-9_-]*$ ]] || continue
+      if trusted "$f"; then PLUGIN[$id]=$f; else UNTRUSTED+=("$f"); fi
+    done
+  done
+}
+describe() { # id -> describe JSON (or empty); call in the main shell so the cache sticks
+  local id=$1
+  if [[ ! -v DESC[$id] ]]; then
+    DESC[$id]=$(timeout 10 "${PLUGIN[$id]}" describe 2>/dev/null | jq -c 'select(type=="object" and .name)' 2>/dev/null | head -n 1)
+  fi
+  printf '%s' "${DESC[$id]}"
+}
+describe_all() { local id; for id in "${!PLUGIN[@]}"; do describe "$id" >/dev/null; done; }
+plugin_enabled() { # id
+  local d=${DESC[$1]:-}; [[ -n $d ]] || return 1
+  [[ $(jq -r '.applies != false' <<<"$d") == true ]] || return 1
+  local def; def=$(jq -r 'if .default_enabled == false then "false" else "true" end' <<<"$d")
+  [[ ${CFG[$1.enabled]:-$def} == true ]]
+}
+plugin_env() { # id -> NAME=value lines for its options
+  local id=$1 key def
+  while IFS=$'\x1f' read -r key def; do
+    printf 'WHISKERS_OPT_%s=%s\n' "$key" "${CFG[$id.$key]:-$def}"
+  done < <(jq -r '.options[]? | [.key, (.default|tostring)] | join("\u001f")' <<<"${DESC[$id]:-{\}}")
+}
+sorted_ids() { printf '%s\n' "${!PLUGIN[@]}" | sort; }
+
+plugins_json() {
+  local id d k vals
+  for id in $(sorted_ids); do
+    d=${DESC[$id]:-}; [[ -n $d ]] || continue
+    vals=$(for k in $(printf '%s\n' "${!CFG[@]}" | grep "^$id\."); do printf '%s\x1f%s\n' "${k#"$id".}" "${CFG[$k]}"; done |
+           jq -Rn '[inputs | split("\u001f") | {(.[0]): .[1]}] | add // {}')
+    jq -c --arg id "$id" --arg path "${PLUGIN[$id]}" --argjson v "$vals" '
+      {id:$id, path:$path, name, description, applies:(.applies != false),
+       enabled: (($v.enabled // (if .default_enabled == false then "false" else "true" end)) == "true"),
+       options: [(.options // [])[] | . + {value: ($v[.key] // (.default|tostring))}]}' <<<"$d"
+  done | jq -s .
+}
+
+# ================================================================ checks
+run_checks() {
+  local id out rc env_lines
+  {
+    for id in $(sorted_ids); do
+      plugin_enabled "$id" || continue
+      mapfile -t env_lines < <(plugin_env "$id")
+      out=$(env "${env_lines[@]}" WHISKERS_STATE="$STATE_DIR/plugins/$id" timeout 60 "${PLUGIN[$id]}" run 2>/dev/null); rc=$?
+      if [[ -z $out && $rc -ne 0 ]]; then
+        jq -nc --arg id "$id" --arg n "$(jq -r .name <<<"${DESC[$id]}")" --arg rc "$rc" \
+          '{id:("plugin:"+$id), level:"info", title:("The \""+$n+"\" check couldn'\''t run"), summary:("It stopped with code "+$rc+"."),
+            fix:("whiskers debug "+$id), detail:"", plugin:$id}'
+      else
+        jq -c --arg p "$id" 'select(type=="object" and .id and .level and .title) | .plugin = $p
+          | .summary //= "" | .fix //= "" | .detail //= ""' <<<"$out" 2>/dev/null
+      fi
+    done
+    local f
+    for f in "${UNTRUSTED[@]}"; do
+      jq -nc --arg f "$f" '{id:("untrusted:"+$f), level:"warn", title:"A check was skipped for safety",
+        summary:("\($f) can be changed by other users, so Whiskers will not run it."), fix:("chmod go-w " + $f), detail:"", plugin:"whiskers"}'
+    done
+  } | jq -s --arg v "$VERSION" --argjson t "$(date +%s)" --arg watch "$(systemctl --user is-active whiskers-watch.service 2>/dev/null)" '
+      {version:$v, checked_at:$t, watching:($watch == "active"),
+       level: (map(.level) | if index("error") then "error" elif index("warn") then "warn" elif index("info") then "info" else "ok" end),
+       problems: (map(select(.level=="warn" or .level=="error")) | length),
+       records: sort_by({"error":0,"warn":1,"info":2,"ok":3}[.level])}' > "$STATE_DIR/status.json.tmp" \
+  && mv -f "$STATE_DIR/status.json.tmp" "$STATE_DIR/status.json"
+  cat "$STATE_DIR/status.json"
+}
+
+# ================================================================ notifications
+notify() { # urgency title body
+  [[ ${CFG[general.notify]} == true ]] || return 0
+  command -v notify-send >/dev/null 2>&1 || return 0
+  local body; body=$(sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' <<<"$3")
+  notify-send --app-name=Whiskers --icon=whiskers -h string:desktop-entry:whiskers -u "$1" "$2" "$body" 2>/dev/null
+  return 0
+}
+
+notify_findings() { # status JSON on stdin; one notification per new problem, repeated once per remind_hours
+  local json now seen=$STATE_DIR/notified new=$STATE_DIR/notified.new remind=$(( CFG[general.remind_hours] * 3600 ))
+  json=$(cat); now=$(date +%s); : > "$new"
+  local -a due=()
+  local id level title summary fix key last
+  while IFS=$'\x1f' read -r id level title summary fix; do
+    key="$id|$level"
+    last=$(awk -F'\t' -v k="$key" '$1==k{print $2}' "$seen" 2>/dev/null)
+    if [[ -z $last ]] || (( now - last >= remind )); then due+=("$level"$'\x1f'"$title"$'\x1f'"$summary"$'\x1f'"$fix"); last=$now; fi
+    printf '%s\t%s\n' "$key" "$last" >> "$new"
+  done < <(jq -r '.records[] | select(.level=="warn" or .level=="error") | [.id,.level,.title,.summary,.fix] | join("\u001f")' <<<"$json")
+  if [[ -f $seen ]]; then   # keep cleared problems for a while so a flapping one isn't re-announced
+    awk -F'\t' -v now="$now" -v r="$remind" 'FILENAME==ARGV[1]{k[$1]=1; next} !($1 in k) && now-$2 < r' "$new" "$seen" > "$new.keep"
+    cat "$new.keep" >> "$new"; rm -f "$new.keep"
+  fi
+  mv -f "$new" "$seen"
+  (( ${#due[@]} )) || return 0
+  if (( ${#due[@]} > MAX_SINGLE_NOTIFICATIONS )); then
+    local titles; titles=$(printf '%s\n' "${due[@]}" | cut -d$'\x1f' -f2 | paste -sd ';' | sed 's/;/, /g')
+    notify critical "${#due[@]} things need your attention" "$titles."$'\n'"Open Whiskers to see what to do."
+    return 0
+  fi
+  local d u
+  for d in "${due[@]}"; do
+    IFS=$'\x1f' read -r level title summary fix <<<"$d"
+    u=normal; [[ $level == error ]] && u=critical
+    notify "$u" "$title" "$summary${fix:+$'\n'What to do: $fix}"
+  done
+}
+
+# ================================================================ live watch: journal events in plain words
+# shellcheck source=../lib/common.sh
+WHISKERS_STATE=$STATE_DIR . "$WHISKERS_LIB/common.sh" || { echo "whiskers: missing $WHISKERS_LIB/common.sh" >&2; exit 2; }
+
+record_event() { # level title summary fix detail
+  jq -nc --argjson t "${EV_TIME:-$(date +%s)}" --arg level "$1" --arg title "$2" --arg summary "$3" --arg fix "$4" --arg detail "$5" \
+    '{time:$t, level:$level, title:$title, summary:$summary, fix:$fix, detail:$detail}' >> "$EVENTS"
+  if (( $(wc -l < "$EVENTS") > 400 )); then tail -n 200 "$EVENTS" > "$EVENTS.tmp" && mv -f "$EVENTS.tmp" "$EVENTS"; fi
+  local u=normal; [[ $1 == error ]] && u=critical
+  notify "$u" "$2" "$3${4:+$'\n'What to do: $4}"
+}
+
+signal_words() {
+  case $1 in
+    SIGSEGV) echo "hit a memory error" ;;
+    SIGABRT) echo "stopped itself after an internal error" ;;
+    SIGBUS)  echo "lost access to a file or memory it was using" ;;
+    SIGILL|SIGFPE|SIGSYS) echo "hit a fatal error" ;;
+    SIGKILL) echo "was force-stopped" ;;
+    *) echo "crashed" ;;
+  esac
+}
+
+handle_event() { # one event JSON from watch-filter.jq
+  local ev=$1 kind key now rate=600 raw
+  now=$(date +%s); kind=$(jq -r .kind <<<"$ev"); raw=$(jq -r .raw <<<"$ev")
+  EV_TIME=$(jq -r '.time // empty' <<<"$ev"); [[ $EV_TIME =~ ^[0-9]+$ && $EV_TIME -gt 0 ]] || EV_TIME=$now
+  if [[ $kind == sleep-request ]]; then
+    REQ_ACTION=$(jq -r .action <<<"$ev"); REQ_CLIENT=$(friendly_name "$(jq -r .client <<<"$ev")"); REQ_TIME=$now; return
+  fi
+  case $kind in
+    crash)       key="crash:$(jq -r .comm <<<"$ev")" ;;
+    unit-failed) key="unit:$(jq -r .unit <<<"$ev")" ;;
+    disk-error)  key="disk:$(jq -r .dev <<<"$ev")"; rate=1800 ;;
+    thermal)     key=thermal; rate=1800 ;;
+    *)           key=$kind ;;
+  esac
+  (( now - ${LAST_SEEN[$key]:-0} < rate )) && return
+  LAST_SEEN[$key]=$now
+  case $kind in
+    crash)
+      local comm pid name meaning
+      comm=$(jq -r .comm <<<"$ev"); pid=$(jq -r .pid <<<"$ev")
+      name=$(friendly_name "$comm"); meaning=$(friendly_meaning "$comm")
+      record_event warn "$name crashed" \
+        "It $(signal_words "$(jq -r .signal <<<"$ev")") and closed. ${meaning:-If it keeps happening, Whiskers will point it out.}" \
+        "coredumpctl info $pid" "$raw" ;;
+    unit-failed)
+      local unit scope=--system desc; unit=$(jq -r .unit <<<"$ev")
+      [[ $unit == whiskers* ]] && return
+      [[ $(jq -r .user <<<"$ev") == true ]] && scope=--user
+      desc=$(systemctl "$scope" show -p Description --value "$unit" 2>/dev/null)
+      record_event error "${desc:-$unit} stopped working" \
+        "The background service $unit failed. Features that depend on it may not work until it's fixed." \
+        "systemctl $scope status $unit" "$raw" ;;
+    oom)
+      record_event error "Your computer ran out of memory" \
+        "$(friendly_name "$(jq -r .proc <<<"$ev")") was closed by the system to keep everything else running. Closing unused tabs or apps helps." \
+        "" "$raw" ;;
+    sleep-failed)
+      local what="Sleep" by=""
+      if (( now - REQ_TIME < 900 )); then
+        [[ $REQ_ACTION == hibernate* ]] && what="Hibernate"
+        by="It was started from $REQ_CLIENT, "
+      fi
+      record_event warn "$what didn't finish" \
+        "${by:-It started, }but the computer woke straight back up. That can look like a crash or a desktop restart; your open apps are fine." \
+        "journalctl -b -g 'PM: |sleep' -n 30" "$raw"
+      REQ_TIME=0 ;;
+    disk-error)
+      record_event error "Your drive reported an error" \
+        "The system couldn't read or write part of $(jq -r .dev <<<"$ev"). If this happens again, back up important files now." \
+        "whiskers status" "$raw" ;;
+    gpu)
+      record_event warn "The graphics chip froze and was reset" \
+        "Your screens may have flickered or gone black for a moment. If it happens often, note what you were doing at the time." \
+        "journalctl -k -b -g 'amdgpu|NVRM|ring' -n 30" "$raw" ;;
+    thermal)
+      record_event warn "Your CPU is too hot" \
+        "It is slowing itself down to cool off. Make sure the vents aren't blocked and the fans can spin." "" "$raw" ;;
+  esac
+}
+
+watch_events() {
+  REQ_ACTION="" REQ_CLIENT="" REQ_TIME=0
+  declare -gA LAST_SEEN=()
+  local ev
+  while IFS= read -r ev; do handle_event "$ev"; done < <(
+    journalctl -f -n 0 -o json --output-fields=MESSAGE,MESSAGE_ID,_TRANSPORT,SYSLOG_IDENTIFIER,UNIT,USER_UNIT,COREDUMP_COMM,COREDUMP_EXE,COREDUMP_SIGNAL_NAME,COREDUMP_SIGNAL,COREDUMP_PID 2>/dev/null \
+    | jq --unbuffered -c -f "$WHISKERS_LIB/watch-filter.jq" 2>/dev/null)
+}
+
+# ================================================================ output
+print_status() {
+  local json; json=$(cat)
+  local b="" d="" r="" red="" yel="" grn="" blu=""
+  [[ -t 1 ]] && { b=$'\e[1m' d=$'\e[2m' r=$'\e[0m' red=$'\e[31m' yel=$'\e[33m' grn=$'\e[32m' blu=$'\e[34m'; }
+  local n; n=$(jq -r .problems <<<"$json")
+  echo "${b}Whiskers${r} ${d}$(date -d "@$(jq -r .checked_at <<<"$json")" '+%F %H:%M') · live watch $(jq -r 'if .watching then "on" else "off" end' <<<"$json")${r}"
+  if (( n == 0 )); then echo "${grn}All quiet.${r}"; elif (( n == 1 )); then echo "${yel}1 thing needs your attention.${r}"
+  else echo "${yel}$n things need your attention.${r}"; fi
+  echo
+  local level title summary fix detail sym
+  while IFS=$'\x1f' read -r level title summary fix detail; do
+    case $level in error) sym="${red}✖${r}" ;; warn) sym="${yel}▲${r}" ;; info) sym="${blu}●${r}" ;; *) sym="${grn}✔${r}" ;; esac
+    echo " $sym ${b}$title${r}"
+    [[ -n $summary ]] && fold -s -w 96 <<<"$summary" | sed 's/^/   /'
+    [[ -n $fix ]] && echo "   ${b}What to do:${r} $fix"
+    [[ -n $detail ]] && echo "   ${d}$detail${r}"
+  done < <(jq -r '.records[] | [.level,.title,.summary,.fix,.detail] | join("\u001f")' <<<"$json")
+  return 0
+}
+
+events_json() { if [[ -s $EVENTS ]]; then tail -n "${1:-30}" "$EVENTS" | jq -s 'reverse'; else echo '[]'; fi; }
+
+usage() {
+  cat <<EOF
+Whiskers $VERSION - senses trouble before it lands.
+
+  whiskers status [--json]        run all checks and explain the results
+  whiskers events [--json]        what happened recently (crashes, failed services, sleep problems...)
+  whiskers check                  run checks and notify about new problems (used by the timer)
+  whiskers watch                  follow the system log live and explain events (used by whiskers-watch.service)
+  whiskers plugins [--json]       list checks and their settings
+  whiskers config list [--json]   all settings (--json: general settings only)
+  whiskers config get KEY         e.g. general.interval_hours, disk.temp_warn
+  whiskers config set KEY VALUE
+  whiskers setup                  detect this device and write sensible defaults (run by install.sh)
+  whiskers debug CHECK            run one check and show its raw output
+
+Your own checks go in $WHISKERS_CONFIG_DIR/checks.d/ (format: $WHISKERS_LIB/common.sh).
+EOF
+}
+
+# ================================================================ main
+for dep in jq awk timeout flock; do command -v "$dep" >/dev/null 2>&1 || { echo "whiskers: missing dependency: $dep" >&2; exit 2; }; done
+mkdir -p "$STATE_DIR"
+load_config
+discover
+with_lock() { exec 9>"$STATE_DIR/lock"; flock -w 90 9 || { echo "whiskers: another run is busy" >&2; exit 3; }; }
+
+apply_interval() {
+  mkdir -p "$UNIT_DIR/whiskers.timer.d"
+  printf '[Timer]\nOnUnitActiveSec=\nOnUnitActiveSec=%sh\n' "${CFG[general.interval_hours]}" > "$UNIT_DIR/whiskers.timer.d/interval.conf"
+  systemctl --user daemon-reload 2>/dev/null
+  systemctl --user is-active -q whiskers.timer 2>/dev/null && systemctl --user restart whiskers.timer
+  return 0
+}
+apply_live() {
+  [[ -f $UNIT_DIR/whiskers-watch.service ]] || return 0
+  if [[ ${CFG[general.live]} == true ]]; then systemctl --user enable --now whiskers-watch.service >/dev/null 2>&1
+  else systemctl --user disable --now whiskers-watch.service >/dev/null 2>&1; fi
+  return 0
+}
+
+config_set() { # key value
+  local key=$1 v=$2 sec=${1%%.*} k=${1#*.}
+  [[ $key == *.* && $sec =~ ^[a-z0-9_-]+$ && $k =~ ^[a-z0-9_]+$ ]] || { echo "use SECTION.KEY, e.g. general.notify or disk.temp_warn" >&2; return 1; }
+  [[ $v != *$'\n'* ]] || { echo "value must be one line" >&2; return 1; }
+  if [[ $sec == general ]]; then
+    valid_general "$k" "$v" || { echo "invalid value for $key: $v" >&2; return 1; }
+  else
+    [[ -v PLUGIN[$sec] ]] || { echo "no such check: $sec (see: whiskers plugins)" >&2; return 1; }
+    describe "$sec" >/dev/null
+    if [[ $k == enabled ]]; then [[ $v == true || $v == false ]] || { echo "enabled must be true or false" >&2; return 1; }
+    else
+      local o; o=$(jq -c --arg k "$k" '.options[]? | select(.key == $k)' <<<"${DESC[$sec]}")
+      [[ -n $o ]] || { echo "$sec has no setting called $k" >&2; return 1; }
+      case $(jq -r .type <<<"$o") in
+        int)  { [[ $v =~ ^-?[0-9]+$ ]] && jq -e --argjson v "$v" '(.min == null or $v >= .min) and (.max == null or $v <= .max)' <<<"$o" >/dev/null; } \
+                || { echo "$key must be a number in range $(jq -r '"\(.min // "-")..\(.max // "-")"' <<<"$o")" >&2; return 1; } ;;
+        bool) [[ $v == true || $v == false ]] || { echo "$key must be true or false" >&2; return 1; } ;;
+      esac
+    fi
+  fi
+  [[ ${CFG[$key]:-} == "$v" && -f $CONF ]] && return 0
+  CFG[$key]=$v
+  save_config || return 1
+  [[ $key == general.interval_hours ]] && apply_interval
+  [[ $key == general.live ]] && apply_live
+  return 0
+}
+
+setup() {
+  echo "Detecting this device..."
+  if [[ -z ${CFG[services.must_run]:-} ]] && systemctl cat asusd.service >/dev/null 2>&1; then
+    CFG[services.must_run]=asusd; echo "  ASUS laptop: watching asusd so you hear if it stops"
+  fi
+  local list=$WHISKERS_CONFIG_DIR/releases.conf
+  if [[ ! -f $list ]]; then
+    mkdir -p "$WHISKERS_CONFIG_DIR"; cp "$ROOT/share/releases.conf.example" "$list"; chmod 600 "$list"
+    local src=$HOME/asusctl url repo
+    if [[ -f $src/Cargo.toml ]] && url=$(git -C "$src" remote get-url origin 2>/dev/null) && [[ $url =~ github\.com[:/]([^/]+/[^/.]+) ]]; then
+      repo=${BASH_REMATCH[1]}
+      cat >> "$list" <<EOF
+
+[asusctl]
+repo      = $repo
+installed = sed -n 's/^version *= *"\(.*\)"/\1/p' $src/Cargo.toml | head -n 1
+update    = rustup update && cd $src && git fetch --tags && git checkout {latest} && make && sudo make install && sudo systemctl restart asusd
+EOF
+      echo "  watching asusctl releases (github.com/$repo, built in $src)"
+    fi
+    echo "  release watch list: $list"
+  fi
+  save_config
+  apply_interval
+  apply_live
+  if [[ -z $(journalctl --system -n 1 -q -o cat 2>/dev/null) ]]; then
+    echo "  NOTE: you can't read the system log, so live alerts only cover your own apps."
+    echo "        Fix: sudo usermod -aG systemd-journal $USER   (then log out and back in)"
+  fi
+  echo "Done. Settings: $CONF"
+}
+
+case ${1:-status} in
+  status) with_lock; describe_all; if [[ ${2:-} == --json ]]; then run_checks; else run_checks | print_status; fi ;;
+  check)  with_lock; describe_all; run_checks | notify_findings ;;
+  watch)  watch_events ;;
+  events) if [[ ${2:-} == --json ]]; then events_json 30; else
+            events_json 30 | jq -r '.[] | "\(.time | strflocaltime("%a %H:%M"))  \(.title)\n            \(.summary)"'; fi ;;
+  plugins)
+    describe_all
+    if [[ ${2:-} == --json ]]; then plugins_json
+    else plugins_json | jq -r '.[] | "\(if .applies|not then "-" elif .enabled then "on " else "off" end) \(.id): \(.name)\n      \(.description)" +
+                               ([.options[] | "\n      \(.key) = \(.value)"] | join(""))'; fi ;;
+  config)
+    case ${2:-list} in
+      list) if [[ ${3:-} == --json ]]; then
+              for k in "${GENERAL_KEYS[@]}"; do printf '%s\x1f%s\n' "$k" "${CFG[general.$k]}"; done | jq -Rn '[inputs | split("\u001f") | {(.[0]): .[1]}] | add'
+            else for k in $(printf '%s\n' "${!CFG[@]}" | sort); do echo "$k = ${CFG[$k]}"; done; fi ;;
+      get)  [[ -v CFG[${3:-}] ]] && echo "${CFG[$3]}" || { echo "not set: ${3:-}" >&2; exit 1; } ;;
+      set)  with_lock; load_config; config_set "${3:-}" "${4:-}" || exit 1 ;;
+      *) usage; exit 1 ;;
+    esac ;;
+  setup) with_lock; describe_all; setup ;;
+  debug)
+    [[ -v PLUGIN[${2:-}] ]] || { echo "no such check: ${2:-}" >&2; exit 1; }
+    describe "$2" >/dev/null
+    echo "# ${PLUGIN[$2]}"; jq . <<<"${DESC[$2]}"
+    mapfile -t envl < <(plugin_env "$2"); printf '# %s\n' "${envl[@]}"
+    env "${envl[@]}" WHISKERS_STATE="$STATE_DIR/plugins/$2" "${PLUGIN[$2]}" run; echo "# exit $?" ;;
+  version|--version|-V) echo "$VERSION" ;;
+  help|--help|-h) usage ;;
+  *) usage; exit 1 ;;
+esac

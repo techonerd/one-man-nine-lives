@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# Drive health for NVMe and SATA drives via UDisks (no root needed): errors, wear, heat, slow response.
+. "${WHISKERS_LIB:?}/common.sh"
+DESCRIBE='{"name":"Drive health","description":"Watches your drives for hardware errors, wear, heat and slow response, which is often the hidden cause of a laggy desktop.","applies":true,"default_enabled":true,
+ "options":[{"key":"temp_warn","type":"int","default":70,"min":40,"max":100,"label":"Too hot at","unit":"°C"},
+            {"key":"wear_warn","type":"int","default":80,"min":10,"max":100,"label":"Wear warning at","unit":"% of life"},
+            {"key":"latency_warn","type":"int","default":20,"min":1,"max":1000,"label":"Slow above","unit":"ms average"}]}'
+
+UD=org.freedesktop.UDisks2
+prop() { busctl --system --json=short get-property $UD "$1" "$2" "$3" 2>/dev/null | jq -r '.data | if type=="array" then join(", ") else tostring end'; }
+
+dev_for_serial() { # serial -> kernel block device name (nvme0n1, sda)
+  local b s
+  for b in /sys/block/*; do
+    b=${b##*/}; [[ $b == loop* || $b == zram* || $b == dm-* || $b == sr* ]] && continue
+    s=$(udevadm info -q property -n "/dev/$b" 2>/dev/null | sed -n 's/^ID_SERIAL_SHORT=//p')
+    [[ -n $s && $s == "$1" ]] && { echo "$b"; return; }
+  done
+}
+
+latency() { # dev serial -> "read_ms write_ms reads writes" since previous run (since boot on first run)
+  local dev=$1 sf=$WHISKERS_STATE/stat-$2 boot r rt w wt pb="" pr=0 prt=0 pw=0 pwt=0
+  boot=$(cat /proc/sys/kernel/random/boot_id)
+  read -r r _ _ rt w _ _ wt _ < "/sys/block/$dev/stat" || return 1
+  [[ -f $sf ]] && read -r pb pr prt pw pwt < "$sf"
+  [[ $pb == "$boot" ]] || { pr=0 prt=0 pw=0 pwt=0; }
+  echo "$boot $r $rt $w $wt" > "$sf"
+  awk -v r=$((r-pr)) -v rt=$((rt-prt)) -v w=$((w-pw)) -v wt=$((wt-pwt)) \
+      'BEGIN{ printf "%s %s %d %d\n", (r>0?sprintf("%.1f",rt/r):"-"), (w>0?sprintf("%.1f",wt/w):"-"), r, w }'
+}
+
+run() {
+  local rootdev; rootdev=$(lsblk -no PKNAME "$(findmnt -no SOURCE / 2>/dev/null)" 2>/dev/null | head -n 1)
+  local p
+  while read -r p; do
+    local model serial dev role level=ok problems=() temp=0 wear="" errs="" fix="" kind=""
+    model=$(prop "$p" $UD.Drive Model); serial=$(prop "$p" $UD.Drive Serial)
+    [[ -z $serial || $(prop "$p" $UD.Drive Removable) == true ]] && continue
+    if busctl --system introspect $UD "$p" $UD.NVMe.Controller >/dev/null 2>&1; then
+      kind=nvme
+      local a; a=$(busctl --system --json=short call $UD "$p" $UD.NVMe.Controller SmartGetAttributes 'a{sv}' 0 2>/dev/null) || continue
+      read -r wear errs spare thresh temp < <(jq -r '.data[0] as $a | [$a.percent_used.data, $a.media_errors.data, $a.avail_spare.data,
+            $a.spare_thresh.data, (($a.temp_sensors.data // [0])[0])] | map(tostring) | join(" ")' <<<"$a")
+      local crit; crit=$(prop "$p" $UD.NVMe.Controller SmartCriticalWarning)
+      if [[ -n $crit ]] || (( errs > 0 )) || (( spare <= thresh )); then
+        level=error; problems+=("it reports hardware trouble (${crit:+warnings: $crit, }$errs media errors, $spare% spare blocks left)")
+      fi
+    elif [[ $(prop "$p" $UD.Drive.Ata SmartSupported) == true ]]; then
+      kind=sata
+      temp=$(prop "$p" $UD.Drive.Ata SmartTemperature | awk '{printf "%d", $1}')
+      local bad; bad=$(prop "$p" $UD.Drive.Ata SmartNumBadSectors)
+      if [[ $(prop "$p" $UD.Drive.Ata SmartFailing) == true ]] || (( ${bad:-0} > 0 )); then
+        level=error; problems+=("it reports hardware trouble (${bad:-0} bad sectors)")
+      fi
+    else
+      continue
+    fi
+    (( temp > 200 )) && temp=$((temp - 273))   # Kelvin -> Celsius
+    dev=$(dev_for_serial "$serial")
+    role="Drive $model"; [[ -n $dev && $dev == "$rootdev" ]] && role="Your system drive ($model)"
+    if [[ -n $wear ]] && (( wear >= $(opt wear_warn 80) )); then
+      [[ $level == ok ]] && level=warn; problems+=("it has used $wear% of its rated life")
+    fi
+    if (( temp >= $(opt temp_warn 70) )); then
+      [[ $level == ok ]] && level=warn; problems+=("it is running hot at $temp °C and will slow itself down")
+    fi
+    local rl="-" wl="-" nr=0 nw=0 slow=0
+    if [[ -n $dev ]]; then read -r rl wl nr nw < <(latency "$dev" "$serial"); fi
+    if awk -v a="$rl" -v b="$wl" -v lim="$(opt latency_warn 20)" -v nr="$nr" -v nw="$nw" \
+         'BEGIN{ exit !((nr>=200 && a+0>lim) || (nw>=200 && b+0>lim)) }'; then
+      slow=1; [[ $level == ok ]] && level=warn
+      problems+=("it is responding slowly: reads take $rl ms and writes $wl ms on average (healthy SSDs: under 2 ms), so apps open slowly and the desktop can stutter")
+    fi
+    local facts="$temp °C${wear:+, $wear% of life used}${dev:+, read $rl ms / write $wl ms}"
+    case $level in
+      error) fix="Back up important files now, then: sudo smartctl -x /dev/${dev:-DEVICE}" ;;
+      warn)  (( slow )) && fix="See which app is writing in \"Disk activity\"; if it stays slow while idle, the drive may need a warranty claim" ;;
+    esac
+    if (( ${#problems[@]} )); then
+      local title="$role needs attention"; [[ $level == error ]] && title="$role is reporting hardware problems"
+      emit "disk:$serial" "$level" "$title" "$(IFS=';'; echo "${problems[*]}" | sed 's/;/; /g' | sed 's/^./\U&/')." "$fix" "$facts · serial $serial"
+    else
+      emit "disk:$serial" ok "$role is healthy" "$facts." "" "serial $serial"
+    fi
+  done < <(busctl --system --list tree $UD 2>/dev/null | grep "^/org/freedesktop/UDisks2/drives/")
+}
+plugin_main "$@"

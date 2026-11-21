@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Pending updates (apt, dnf, pacman, zypper, flatpak) and restarts needed after a kernel update.
+. "${WHISKERS_LIB:?}/common.sh"
+DESCRIBE='{"name":"Updates","description":"Reminds you when updates have been waiting too long, and when a restart is needed to finish one.","applies":true,"default_enabled":true,
+ "options":[{"key":"remind_days","type":"int","default":7,"min":1,"max":90,"label":"Remind after","unit":"days"}]}'
+
+days_since() { [[ -n $1 ]] && echo $(( ($(date +%s) - $(date -d "$1" +%s)) / 86400 )) || echo -1; }
+
+run() {
+  local n=0 last="" fix="" mgr=""
+  if command -v apt >/dev/null 2>&1; then
+    mgr=apt; n=$(apt list --upgradable 2>/dev/null | grep -c '/')
+    last=$(zgrep -h -B1 -E '^Commandline: (apt|apt-get) .*(full-upgrade|dist-upgrade|upgrade)' /var/log/apt/history.log* 2>/dev/null \
+           | sed -n 's/^Start-Date: \([0-9-]*\).*/\1/p' | sort | tail -n 1)
+    fix="sudo apt update && sudo apt full-upgrade"
+  elif command -v pacman >/dev/null 2>&1; then
+    mgr=pacman; command -v checkupdates >/dev/null 2>&1 && n=$(checkupdates 2>/dev/null | wc -l)
+    last=$(grep 'starting full system upgrade' /var/log/pacman.log 2>/dev/null | tail -n 1 | sed -n 's/^\[\([0-9-]*\)T.*/\1/p')
+    fix="sudo pacman -Syu"
+  elif command -v dnf >/dev/null 2>&1; then
+    mgr=dnf; n=$(dnf -q check-update 2>/dev/null | grep -cE '^[[:alnum:]]')
+    fix="sudo dnf upgrade --refresh"
+  elif command -v zypper >/dev/null 2>&1; then
+    mgr=zypper; n=$(zypper -q list-updates 2>/dev/null | grep -c '^v ')
+    fix="sudo zypper update"
+  fi
+  local fp=0
+  if command -v flatpak >/dev/null 2>&1; then
+    fp=$(flatpak remote-ls --updates 2>/dev/null | wc -l)
+    (( fp > 0 )) && fix="${fix:+$fix && }flatpak update"
+  fi
+  local total=$((n + fp)) days; days=$(days_since "$last")
+  local when="the last full update isn't recorded"
+  (( days == 0 )) && when="last full update was today"
+  (( days == 1 )) && when="last full update was yesterday"
+  (( days > 1 )) && when="last full update was $days days ago"
+  if (( total > 0 )) && (( days < 0 || days >= $(opt remind_days 7) )); then
+    emit updates warn "Updates are waiting" \
+      "$total updates are ready ($when). Updating regularly keeps each update small, and easier to fix if something breaks." "$fix"
+  elif [[ -n $mgr ]]; then
+    emit updates ok "Updates" "$total waiting; $when."
+  fi
+  # Restart needed? Debian/Ubuntu flag file, newer kernel installed, or running kernel's modules removed (Arch)
+  local running newest; running=$(uname -r)
+  newest=$(find /boot -maxdepth 1 -name 'vmlinuz-*' -printf '%f\n' 2>/dev/null | sed 's/^vmlinuz-//' | grep -E '^[0-9]' | sort -V | tail -n 1)
+  if [[ -e /run/reboot-required ]] || [[ -n $newest && $newest != "$running" ]] || [[ ! -d /usr/lib/modules/$running && ! -d /lib/modules/$running ]]; then
+    emit reboot info "Restart to finish updating" \
+      "A newer system core (kernel ${newest:-update}) is installed, but you're still running $running. Restart when convenient." "Restart the computer"
+  fi
+}
+plugin_main "$@"
