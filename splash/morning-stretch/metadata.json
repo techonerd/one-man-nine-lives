@@ -1,0 +1,19 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "22074809+techonerd@users.noreply.github.com",
+                "Name": "techonerd"
+            }
+        ],
+        "Category": "",
+        "Description": "Animated splash screen for Plasma 6 from the One Man Nine Lives suite. Keeps the animation's aspect ratio on any screen, with black bars.",
+        "Id": "com.github.techonerd.morningstretch",
+        "License": "GPL-3.0-or-later",
+        "Name": "Morning Stretch",
+        "Version": "1.0.0",
+        "Website": "https://github.com/techonerd/one-man-nine-lives"
+    },
+    "X-Plasma-APIVersion": "2"
+}
