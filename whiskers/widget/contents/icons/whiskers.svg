@@ -1,14 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <!-- Whiskers app icon: cat head with a watchful eye-glint (One Man Nine Lives) -->
-  <circle cx="32" cy="32" r="30" fill="#1d2230" stroke="#F2EFE6" stroke-opacity=".28" stroke-width="2"/>
-  <path d="M14 46 L14 16 L25 25 Q32 22 39 25 L50 16 L50 46 Q50 54 32 54 Q14 54 14 46 Z" fill="#f2efe6"/>
-  <path d="M17 22 L23 26 L17 30 Z M47 22 L41 26 L47 30 Z" fill="#e8a0a8"/>
-  <ellipse cx="25" cy="36" rx="3.4" ry="4.6" fill="#2a9d8f"/>
-  <ellipse cx="39" cy="36" rx="3.4" ry="4.6" fill="#2a9d8f"/>
-  <ellipse cx="25" cy="36" rx="1.1" ry="3.6" fill="#11141c"/>
-  <ellipse cx="39" cy="36" rx="1.1" ry="3.6" fill="#11141c"/>
-  <path d="M30 43 L34 43 L32 45.5 Z" fill="#e07a8a"/>
-  <g stroke="#f2efe6" stroke-width="1.4" stroke-linecap="round" fill="none">
-    <path d="M27 45 L6 42 M27 47 L7 49 M37 45 L58 42 M37 47 L57 49"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#1d2230" stroke="#F2EFE6" stroke-opacity=".28" stroke-width="2"/><path fill="#f2efe6" d="M14 46 L14 16 L25 25 Q32 22 39 25 L50 16 L50 46 Q50 54 32 54 Q14 54 14 46 Z"/><path fill="#e8a0a8" d="M17 22 L23 26 L17 30 Z M47 22 L41 26 L47 30 Z"/><ellipse cx="25" cy="36" fill="#2a9d8f" rx="3.4" ry="4.6"/><ellipse cx="39" cy="36" fill="#2a9d8f" rx="3.4" ry="4.6"/><ellipse cx="25" cy="36" fill="#11141c" rx="1.1" ry="3.6"/><ellipse cx="39" cy="36" fill="#11141c" rx="1.1" ry="3.6"/><path fill="#e07a8a" d="M30 43 L34 43 L32 45.5 Z"/><g fill="none" stroke="#f2efe6" stroke-linecap="round" stroke-width="1.4"><path d="M27 45 L6 42 M27 47 L7 49 M37 45 L58 42 M37 47 L57 49"/></g></svg>
