@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "22074809+techonerd@users.noreply.github.com",
+                "Name": "techonerd"
+            }
+        ],
+        "Category": "",
+        "Description": "One Man Nine Lives, dark: Tabby & Tweed Dark colours, Thumbs & Paws icons and the Morning Stretch splash.",
+        "Id": "com.github.techonerd.onemanninelives.dark",
+        "License": "GPL-3.0-or-later",
+        "Name": "One Man Nine Lives Dark",
+        "Version": "1.0.0",
+        "Website": "https://github.com/techonerd/one-man-nine-lives"
+    },
+    "Keywords": "Desktop;Workspace;Appearance;Look and Feel;Cat;Tabby;One Man Nine Lives;",
+    "X-Plasma-APIVersion": "2"
+}
