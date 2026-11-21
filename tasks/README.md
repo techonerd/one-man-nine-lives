@@ -17,7 +17,7 @@ Task briefs for AI agents (Antigravity, VS Code agents, Claude). **One task per 
 | 3 | [Night Shift](night-shift.md): Plasma style + Konsole colours | `plasma-style/night-shift/` | low |
 | 4 | [Sunbeam](sunbeam.md): day/night wallpapers | `wallpapers/sunbeam/` | low |
 | 5 | [Laser Pointer](laser-pointer.md): cursors | `cursors/laser-pointer/` | low |
-| 6 | [Thumbs & Paws, round 2](thumbs-and-paws.md): more icons | `icons/thumbs-and-paws/` | low |
+| 6 | [Thumbs & Paws, redesign](thumbs-and-paws.md): "cat that won't let you work" icon set | `icons/thumbs-and-paws/` | low |
 | 7 | [Doorstep](doorstep.md): SDDM login screen | `sddm/doorstep/` | medium: owner tests in a window first |
 | 8 | [Catnap](catnap.md): lock screen | `look-and-feel/one-man-nine-lives/` | **high**: a broken lock screen can lock you out; owner tests only in a window |
 

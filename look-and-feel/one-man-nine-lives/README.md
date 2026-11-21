@@ -38,6 +38,6 @@ Both packages are **generated** from the suite palette, so they can never drift 
 ```bash
 python3 -I tools/generate.py    # writes light/ and dark/ (metadata, defaults, previews)
 ```
-- Ids: `com.github.techonerd.onemanninelives.light` / `.dark`, version 1.0.0.
+- Ids: `com.github.techonerd.onemanninelives.light` / `.dark`, version 0.1.0.
 - When Window Perch, Night Shift, Laser Pointer or Catnap are ready, add them to `DEFAULTS` in `tools/generate.py` and regenerate.
 - KDE Store: upload both variants under "Plasma 6 Global Themes". Note in the listing that the Tabby & Tweed colours, Thumbs & Paws icons and Morning Stretch splash are separate downloads; the store can't install dependencies.

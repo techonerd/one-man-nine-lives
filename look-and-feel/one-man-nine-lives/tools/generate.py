@@ -18,7 +18,7 @@ SUITE = HERE.parent.parent
 sys.path.insert(0, str(SUITE / "color-scheme" / "tabby-and-tweed" / "tools"))
 from generate import LIGHT, DARK  # noqa: E402  (the suite palette)
 
-VERSION = "1.0.0"
+VERSION = "0.1.0"
 ICONS = SUITE / "icons" / "thumbs-and-paws" / "places" / "scalable"
 WHISKERS_ICON = SUITE / "whiskers" / "widget" / "contents" / "icons" / "whiskers.svg"
 

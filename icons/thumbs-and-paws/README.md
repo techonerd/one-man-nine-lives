@@ -7,7 +7,7 @@
 - **Light and dark:** the colours are mid-tones that read well on both, and anything not drawn yet comes from Breeze, which follows your colour scheme. Future monochrome (symbolic) icons will use Plasma's `ColorScheme-Text` stylesheet, so they recolour automatically.
 - **Original artwork:** every icon is generated from simple shapes in `tools/generate.py`. Nothing is copied from another theme.
 
-## Drawn so far (1.0.0 base)
+## Drawn so far (0.1.0)
 `folder`, `folder-home`, `folder-downloads`, `folder-documents`, `folder-pictures`, `folder-music`, `folder-videos`, `folder-desktop`, `folder-favorites`, `user-trash`, `user-trash-full`
 
 ## Install / try

@@ -64,7 +64,7 @@ tasks/                              one brief per remaining component, for AI ag
 - **Follow the system light/dark theme:** use Kirigami/Plasma theme colours and themed icons, `ColorScheme-Text` for monochrome art, and ship light and dark variants wherever a component can't follow automatically (cursors, wallpapers, global theme).
 - Colours come from the Tabby & Tweed palette (`color-scheme/tabby-and-tweed/tools/generate.py`).
 - Original work only. Generated artwork is produced by the `tools/` scripts in each folder.
-- Ids follow `com.github.techonerd.<name>`; every component starts at version 1.0.0.
+- Ids follow `com.github.techonerd.<name>`; every component stays at 0.1.0 until the whole suite is finished and tested, then all become 1.0.0 together.
 
 ## License
 GPL-3.0-or-later. All code and artwork are original work by techonerd.
