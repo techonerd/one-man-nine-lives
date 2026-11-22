@@ -16,6 +16,28 @@ tar --owner=0 --group=0 -C splash -czf "dist/morning-stretch-$V.tar.gz" morning-
 V=$(version whiskers/widget/metadata.json)
 (cd whiskers/widget && zip -qr -X "../../dist/whiskers-widget-$V.plasmoid" metadata.json contents)
 
+# Name Tag widget (KDE Store: "Plasma 6 Widgets")
+V_NAMETAG=$(version widgets/name-tag/metadata.json)
+(cd widgets/name-tag && zip -qr -X "../../dist/name-tag-$V_NAMETAG.plasmoid" metadata.json contents)
+
+# Lap Time widget (KDE Store: "Plasma 6 Widgets")
+V_LAPTIME=$(version widgets/lap-time/metadata.json)
+(cd widgets/lap-time && zip -qr -X "../../dist/lap-time-$V_LAPTIME.plasmoid" metadata.json contents)
+
+# Window Perch window decoration (KDE Store: "Aurorae Window Decorations")
+V_PERCH=$(version window-decoration/window-perch/WindowPerch/metadata.json)
+tar --owner=0 --group=0 -C window-decoration/window-perch -czf "dist/window-perch-$V_PERCH.tar.gz" WindowPerch
+
+# Night Shift plasma style (KDE Store: "Plasma 6 Desktop Themes")
+V_NIGHTSHIFT=$(version plasma-style/night-shift/night-shift/metadata.json)
+tar --owner=0 --group=0 -C plasma-style/night-shift -czf "dist/plasma-style-night-shift-$V_NIGHTSHIFT.tar.gz" night-shift
+
+# Night Shift Konsole color schemes & profile
+tar --owner=0 --group=0 -C plasma-style/night-shift -czf "dist/konsole-night-shift-$SUITE_VERSION.tar.gz" konsole
+
+# Doorstep SDDM theme
+tar --owner=0 --group=0 -C sddm/doorstep -czf "dist/sddm-doorstep-$SUITE_VERSION.tar.gz" doorstep
+
 # Whiskers full tool (CLI + timer + widget) - GitHub release asset
 tar --owner=0 --group=0 --exclude='*.plasmoid' -czf "dist/whiskers-$V.tar.gz" whiskers
 

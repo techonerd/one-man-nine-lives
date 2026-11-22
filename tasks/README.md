@@ -20,6 +20,8 @@ Task briefs for AI agents (Antigravity, VS Code agents, Claude). **One task per 
 | 6 | [Thumbs & Paws, redesign](thumbs-and-paws.md): "cat that won't let you work" icon set | `icons/thumbs-and-paws/` | low |
 | 7 | [Doorstep](doorstep.md): SDDM login screen | `sddm/doorstep/` | medium: owner tests in a window first |
 | 8 | [Catnap](catnap.md): lock screen | `look-and-feel/one-man-nine-lives/` | **high**: a broken lock screen can lock you out; owner tests only in a window |
+| 10 | [Lap Time](lap-time.md): break reminder with Casper overlay | `widgets/lap-time/` | low |
+| 9 | [Media overhaul](media.md): Casper model sheet, wallpapers, Doorstep/Catnap art, icons, cursors, sounds, branding (phased) | `art/`, `wallpapers/`, `icons/`, `cursors/`, `sounds/`, `sddm/`, `splash/` | low |
 
 ## Safe test tools on this machine
 | Need | Command (nothing gets installed) |

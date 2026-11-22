@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <entry name="show_icon" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="show_title" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="bold_title" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="icon_size" type="Int">
+      <label>Icon size as a percentage of the panel thickness</label>
+      <default>100</default>
+    </entry>
+    <entry name="text_mode" type="Int">
+      <label>0 window title, 1 application name, 2 application name and title</label>
+      <default>0</default>
+    </entry>
+    <entry name="length_mode" type="Int">
+      <label>0 fit the title, 1 fill free panel space</label>
+      <default>0</default>
+    </entry>
+    <entry name="max_length" type="Int">
+      <label>Maximum length in fit mode, as a percentage of the screen width</label>
+      <default>30</default>
+    </entry>
+    <entry name="only_this_screen" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="mouse_actions" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="empty_text_mode" type="Int">
+      <default>0</default>
+    </entry>
+    <entry name="empty_custom_text" type="String">
+      <default></default>
+    </entry>
+  </group>
+</kcfg>

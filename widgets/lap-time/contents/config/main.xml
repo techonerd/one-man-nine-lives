@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <entry name="eyeEnabled" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="eyeIntervalMin" type="Int">
+      <default>20</default>
+    </entry>
+    <entry name="eyeLengthSec" type="Int">
+      <default>20</default>
+    </entry>
+    <entry name="stretchEnabled" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="stretchIntervalMin" type="Int">
+      <default>50</default>
+    </entry>
+    <entry name="stretchLengthMin" type="Int">
+      <default>5</default>
+    </entry>
+    <entry name="snoozeMin" type="Int">
+      <default>5</default>
+    </entry>
+    <entry name="maxSnoozes" type="Int">
+      <default>3</default>
+    </entry>
+    <entry name="respectDnd" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="eyeLabel" type="String">
+      <default>Eye break</default>
+    </entry>
+    <entry name="stretchLabel" type="String">
+      <default>Stretch break</default>
+    </entry>
+    <entry name="statsDate" type="String">
+      <default></default>
+    </entry>
+    <entry name="statsWorkSec" type="Int">
+      <default>0</default>
+    </entry>
+    <entry name="statsBreaksTaken" type="Int">
+      <default>0</default>
+    </entry>
+    <entry name="statsBreaksSkipped" type="Int">
+      <default>0</default>
+    </entry>
+  </group>
+</kcfg>

@@ -1,0 +1,22 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "techonerd",
+                "Email": "22074809+techonerd@users.noreply.github.com"
+            }
+        ],
+        "Description": "Window Perch: the Breeze window decoration with cat-head buttons (One Man Nine Lives).",
+        "EnabledByDefault": true,
+        "Icon": "preferences-system-windows",
+        "License": "GPL-3.0-or-later",
+        "Name": "Window Perch",
+        "Version": "0.1.0",
+        "Website": "https://github.com/techonerd/one-man-nine-lives"
+    },
+    "X-KDE-ConfigModule": "kcm_windowperchdecoration",
+    "org.kde.kdecoration3": {
+        "blur": false,
+        "recommendedBorderSize": "None"
+    }
+}

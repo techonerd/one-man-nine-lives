@@ -12,10 +12,10 @@
 | Colours | Tabby & Tweed Light | Tabby & Tweed Dark | ✅ suite |
 | Icons | Thumbs & Paws (Breeze for icons not drawn yet) | same | 🚧 suite |
 | Splash | Morning Stretch | same | ✅ suite |
-| Window decoration | Breeze (takes Tabby & Tweed title-bar colours) | same | Window Perch planned |
-| Plasma style | Breeze (follows the colours) | same | Night Shift planned |
+| Window decoration | Breeze (takes Tabby & Tweed title-bar colours) | same | ✅ Window Perch ready |
+| Plasma style | Breeze (follows the colours) | same | ✅ Night Shift ready |
 | Cursors | Breeze | same | Laser Pointer planned |
-| Lock screen, logout | Breeze | same | Catnap planned |
+| Lock screen | Catnap (Tabby & Tweed colours, sleeping cat art) | same | ✅ Catnap ready |
 
 **What it never touches:** your panels and widgets (there's no layout script), and your wallpaper (Sunbeam will be offered separately).
 

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="140" viewBox="0 0 256 140">
+  <g transform="translate(18, 14)">
+    <!-- Mid-tone background pad (light mode) -->
+    
+
+    <!-- Shadow -->
+    <ellipse cx="110" cy="98" rx="80" ry="14" fill="rgba(0, 0, 0, 0.45)"/>
+
+    <!-- Curled Sleeping Tail -->
+    <path d="M168 76 C202 76 210 48 192 34 C180 24 168 32 173 43 C176 52 168 64 144 68 Z"
+          fill="#F5F5F5" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+
+    <!-- Rounded Bean Body Arch -->
+    <path d="M48 78 C28 50 50 16 102 16 C158 16 186 46 176 78 C166 100 128 104 88 100 C64 98 52 88 48 78 Z"
+          fill="#F5F5F5" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+
+    <!-- Soft Rounded Head -->
+    <circle cx="62" cy="62" r="27" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+
+    <!-- Left Rounded Ear with signature notch -->
+    <path d="M42 46 L45 20 C46 18 48 18 49 20 L58 36 Z" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+    <path d="M45 42 L47 24 L54 36 Z" fill="rgba(0, 0, 0, 0.08)"/>
+
+    <!-- Right Rounded Ear with signature notch -->
+    <path d="M64 34 L75 16 C77 15 79 16 80 18 L83 42 Z" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+    <path d="M68 34 L76 21 L80 38 Z" fill="rgba(0, 0, 0, 0.08)"/>
+
+    <!-- Tucked Front Paws -->
+    <ellipse cx="88" cy="80" rx="11" ry="8" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+    <ellipse cx="104" cy="80" rx="10" ry="7.5" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+
+    <!-- Smiling Closed Sleeping Eyes -->
+    <path d="M46 64 Q52 70 58 64" fill="none" stroke="#222222" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M62 64 Q68 70 74 64" fill="none" stroke="#222222" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Sweet Tiny Nose -->
+    <polygon points="59,71 63,71 61,74" fill="#222222" opacity="0.8"/>
+
+    <!-- Whisker Glints -->
+    <g stroke="#222222" stroke-width="0.9" stroke-linecap="round" opacity="0.35">
+      <line x1="42" y1="68" x2="28" y2="66"/>
+      <line x1="42" y1="71" x2="29" y2="73"/>
+      <line x1="76" y1="68" x2="90" y2="66"/>
+      <line x1="76" y1="71" x2="89" y2="73"/>
+    </g>
+
+    <!-- Friendly Zzz -->
+    <g fill="#FFFFFF" font-family="sans-serif" font-weight="bold">
+      <text x="145" y="26" font-size="14" opacity="0.5">z</text>
+      <text x="158" y="16" font-size="18" opacity="0.7">z</text>
+      <text x="174" y="6" font-size="22" opacity="0.9">Z</text>
+    </g>
+  </g>
+</svg>

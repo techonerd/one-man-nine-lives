@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/Theme",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "22074809+techonerd@users.noreply.github.com",
+                "Name": "techonerd"
+            }
+        ],
+        "Category": "Plasma Theme",
+        "Description": "Night Shift: Breeze Plasma style in Tabby & Tweed colours, part of One Man Nine Lives.",
+        "Id": "night-shift",
+        "License": "GPL-3.0-or-later",
+        "Name": "Night Shift",
+        "Version": "0.2.0",
+        "Website": "https://github.com/techonerd/one-man-nine-lives"
+    }
+}

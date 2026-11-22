@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "22074809+techonerd@users.noreply.github.com",
+                "Name": "techonerd"
+            }
+        ],
+        "Category": "Windows and Tasks",
+        "Description": "Shows the active window's icon and title in the panel. A collar tag for your windows.",
+        "Icon": "name-tag",
+        "Id": "com.github.techonerd.nametag",
+        "License": "GPL-3.0-or-later",
+        "Name": "Name Tag",
+        "Version": "0.1.0",
+        "Website": "https://github.com/techonerd/one-man-nine-lives"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

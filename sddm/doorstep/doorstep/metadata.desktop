@@ -1,0 +1,15 @@
+[SddmGreeterTheme]
+Name=Doorstep
+Description=The cat waiting at the door when you come home. Casper Mono theme for SDDM.
+Author=techonerd
+Copyright=(c) 2026 techonerd
+License=GPL-3.0-or-later
+Type=sddm-theme
+Version=0.1.0
+Website=https://github.com/techonerd/one-man-nine-lives
+Screenshot=preview.png
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=doorstep
+Theme-API=2.0
+QtVersion=6

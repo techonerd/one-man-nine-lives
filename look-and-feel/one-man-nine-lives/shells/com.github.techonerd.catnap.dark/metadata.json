@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Shell",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "22074809+techonerd@users.noreply.github.com",
+                "Name": "techonerd"
+            }
+        ],
+        "Category": "",
+        "Description": "Catnap Lock Screen (Dark) for Plasma 6 (One Man Nine Lives)",
+        "Id": "com.github.techonerd.catnap.dark",
+        "License": "GPL-3.0-or-later",
+        "Name": "Catnap Dark",
+        "Version": "0.1.0",
+        "Website": "https://github.com/techonerd/one-man-nine-lives"
+    },
+    "Keywords": "Lockscreen;Catnap;Cat;Tabby;One Man Nine Lives;",
+    "X-Plasma-APIVersion": "2"
+}

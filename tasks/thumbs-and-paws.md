@@ -10,7 +10,7 @@ Read `AGENTS.md`, `tasks/README.md`, `icons/thumbs-and-paws/README.md` first. Th
 2. **One quirk per icon**, drawn from a small reusable **cat parts library** in `tools/generate.py`: ears, paw (pad + toe beans), tail curl, sleeping-curl silhouette, eyes, paw-print. The same parts everywhere, so the set looks designed, not random.
 3. **Small sizes drop the cat.** At 16 and 22 px the quirk disappears or shrinks to a single detail (two ears or a paw tip). Generate separate `16/` and `22/` variants on the pixel grid, plus `scalable/` for 32 px and up.
 4. **Clean geometry:** 64-unit canvas, 2-unit keyline grid, consistent corner radius, a single light source (soft top highlight, no gradients that look muddy on dark panels), no outlines thinner than 1 unit at 32 px.
-5. **Palette only from Tabby & Tweed** (`from generate import LIGHT, DARK` in `color-scheme/tabby-and-tweed/tools/generate.py`). Folder body amber, cat in slate/cream "tabby and tweed" tones, accent rose for inner ears and toe beans.
+5. **Palette only from Tabby & Tweed** plus the `CASPER_LIGHT` / `CASPER_DARK` dicts (see `tasks/media.md`): folder body amber, Casper black in the light theme and white in the dark theme, accent rose for inner ears and toe beans. Ship two themes, `thumbs-and-paws` and `thumbs-and-paws-dark`.
 6. **Light and dark:** every full-colour icon must pass on `#eff0f1` and `#202326` (a dark rim where needed). Symbolic icons use the `ColorScheme-Text` class.
 
 ## Icon list and its quirk

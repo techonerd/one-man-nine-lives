@@ -8,14 +8,14 @@ ColorScheme=TabbyAndTweedDark
 Theme=thumbs-and-paws
 
 [plasmarc][Theme]
-name=default
+name=night-shift
 
 [kcminputrc][Mouse]
 cursorTheme=breeze_cursors
 
 [kwinrc][org.kde.kdecoration2]
-library=org.kde.breeze
-theme=Breeze
+library=com.github.techonerd.windowperch
+theme=Window Perch
 
 [ksplashrc][KSplash]
 Theme=com.github.techonerd.morningstretch

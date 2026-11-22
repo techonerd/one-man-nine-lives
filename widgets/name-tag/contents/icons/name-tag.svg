@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Collar Ring in Slate -->
+  <circle cx="32" cy="14" r="8" fill="none" stroke="#56657A" stroke-width="3"/>
+  <circle cx="32" cy="14" r="9.5" fill="none" stroke="#A39A8C" stroke-width="0.8"/>
+  <rect x="30" y="20" width="4" height="6" rx="1.5" fill="#56657A"/>
+  
+  <!-- Collar Tag in Warm Amber -->
+  <path d="M32 24 L48 40 C52 44 52 50 48 54 C44 58 38 58 32 58 C26 58 20 58 16 54 C12 50 12 44 16 40 Z"
+        fill="#E8A256" stroke="#A85A1C" stroke-width="2"/>
+  <path d="M32 27 L45 40 C48 43 48 48 45 51 C42 54 37 54 32 54 C27 54 22 54 19 51 C16 48 16 43 19 40 Z"
+        fill="none" stroke="#E2C7A6" stroke-width="1.2" opacity="0.8"/>
+  
+  <!-- Small Paw Mark Stamped on Tag -->
+  <ellipse cx="32" cy="46" rx="4.5" ry="3.8" fill="#F0807A" stroke="#2B2620" stroke-width="0.8"/>
+  <circle cx="27" cy="41" r="1.8" fill="#F0807A" stroke="#2B2620" stroke-width="0.8"/>
+  <circle cx="30.5" cy="38" r="1.8" fill="#F0807A" stroke="#2B2620" stroke-width="0.8"/>
+  <circle cx="33.5" cy="38" r="1.8" fill="#F0807A" stroke="#2B2620" stroke-width="0.8"/>
+  <circle cx="37" cy="41" r="1.8" fill="#F0807A" stroke="#2B2620" stroke-width="0.8"/>
+</svg>

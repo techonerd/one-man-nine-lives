@@ -17,6 +17,7 @@ A KDE Plasma 6 suite made by one man and his cat, Casper. Every piece is named h
 | Cursors | **Laser Pointer** | the hand holding it | the cat chasing it | [`cursors/laser-pointer`](cursors/laser-pointer) | Cursors | planned |
 | Wallpapers | **Sunbeam** (day + night) | morning light | the warm spot on the floor | [`wallpapers/sunbeam`](wallpapers/sunbeam) | Plasma 6 Wallpapers | planned |
 | Window title widget | **Name Tag** | a name badge | a collar tag | [`widgets/name-tag`](widgets/name-tag) | Plasma 6 Widgets | planned |
+| Break reminder | **Lap Time** | your lap time | the cat claiming your lap | [`widgets/lap-time`](widgets/lap-time) | Plasma 6 Widgets | planned |
 | Sound theme | **Purr & Ping** | a ping | a purr | [`sounds/purr-and-ping`](sounds/purr-and-ping) | Sound themes | idea |
 
 Each component is published on its own in its KDE Store category. The global theme then ties them together and switches between light and dark with the system.
@@ -26,7 +27,7 @@ Nothing needs sudo except Doorstep (the login screen), which is installed system
 
 | Part | Try it | Remove it |
 |---|---|---|
-| **Everything at once** | `./look-and-feel/one-man-nine-lives/install.sh --apply dark --auto` (colours, icons, splash, both global themes; Light/Dark switch automatically) | `./look-and-feel/one-man-nine-lives/uninstall.sh --all` (restores your previous theme) |
+| **Everything at once** | `./install.sh --apply dark --auto` (colours, icons, splash, global themes, plasma style, widgets, konsole, window perch) | `./uninstall.sh` (removes all manifest-tracked files, restores previous settings) |
 | Morning Stretch | `kpackagetool6 -t Plasma/LookAndFeel -i splash/morning-stretch`, then System Settings → Splash Screen. Preview with `ksplashqml --test --window ./splash/morning-stretch` | `kpackagetool6 -t Plasma/LookAndFeel -r com.github.techonerd.morningstretch` |
 | Whiskers | `./whiskers/install.sh`, then add the widget to a panel | `./whiskers/uninstall.sh` |
 | Tabby & Tweed | `cp color-scheme/tabby-and-tweed/*.colors ~/.local/share/color-schemes/ && plasma-apply-colorscheme TabbyAndTweedDark` (or `TabbyAndTweedLight`) | `plasma-apply-colorscheme BreezeLight` and delete the two files |

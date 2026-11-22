@@ -15,6 +15,7 @@ import tempfile
 
 HERE = pathlib.Path(__file__).resolve().parent.parent
 SUITE = HERE.parent.parent
+sys.path.insert(0, str(HERE / "tools"))
 sys.path.insert(0, str(SUITE / "color-scheme" / "tabby-and-tweed" / "tools"))
 from generate import LIGHT, DARK  # noqa: E402  (the suite palette)
 
@@ -23,13 +24,15 @@ ICONS = SUITE / "icons" / "thumbs-and-paws" / "places" / "scalable"
 WHISKERS_ICON = SUITE / "whiskers" / "widget" / "contents" / "icons" / "whiskers.svg"
 
 VARIANTS = {
-    "light": dict(palette=LIGHT, name="One Man Nine Lives Light", scheme="TabbyAndTweedLight",
-                  desc="One Man Nine Lives, light: Tabby & Tweed Light colours, Thumbs & Paws icons and the Morning Stretch splash."),
-    "dark": dict(palette=DARK, name="One Man Nine Lives Dark", scheme="TabbyAndTweedDark",
-                 desc="One Man Nine Lives, dark: Tabby & Tweed Dark colours, Thumbs & Paws icons and the Morning Stretch splash."),
+    "light": dict(palette=LIGHT, name="One Man Nine Lives Light", scheme="TabbyAndTweedLight", deco="WindowPerchLight",
+                  desc="One Man Nine Lives, light: Tabby & Tweed Light colours, Thumbs & Paws icons, Night Shift style, Window Perch decoration and the Morning Stretch splash."),
+    "dark": dict(palette=DARK, name="One Man Nine Lives Dark", scheme="TabbyAndTweedDark", deco="WindowPerchDark",
+                 desc="One Man Nine Lives, dark: Tabby & Tweed Dark colours, Thumbs & Paws icons, Night Shift style, Window Perch decoration and the Morning Stretch splash."),
 }
 
-# Parts not drawn yet fall back to Breeze (window decoration, cursors, Plasma style, lock screen, logout).
+# Suite parts: Tabby & Tweed colours, Thumbs & Paws icons, Night Shift Plasma style, Morning Stretch splash.
+# Window Perch decoration (Breeze fork; colours follow the colour scheme live). Still Breeze: application style, cursors (until Laser Pointer).
+# The login screen (SDDM) is system-wide and can't be set by a global theme.
 # No [Wallpaper] and no layouts: applying the theme never replaces your wallpaper or touches your panels.
 DEFAULTS = """[kdeglobals][KDE]
 widgetStyle=Breeze
@@ -41,14 +44,14 @@ ColorScheme={scheme}
 Theme=thumbs-and-paws
 
 [plasmarc][Theme]
-name=default
+name=night-shift
 
 [kcminputrc][Mouse]
 cursorTheme=breeze_cursors
 
 [kwinrc][org.kde.kdecoration2]
-library=org.kde.breeze
-theme=Breeze
+library=com.github.techonerd.windowperch
+theme=Window Perch
 
 [ksplashrc][KSplash]
 Theme=com.github.techonerd.morningstretch
@@ -96,7 +99,7 @@ def desktop(p: dict) -> str:
     # desktop icons
     names = [("folder-home", "Home"), ("folder-documents", "Documents"), ("folder-downloads", "Downloads"),
              ("folder-pictures", "Pictures"), ("user-trash", "Trash")]
-    label = "#2B2620" if not dark else "#EDE6DA"
+    label = p["text"]
     for i, (n, text) in enumerate(names):
         y = 60 + i * 150
         out.append(nested(ICONS / f"{n}.svg", 70, y, 96))
@@ -160,11 +163,15 @@ def render(svg: str, outs: list) -> None:
 
 
 def main() -> int:
+    # Generate lockscreen art for light and dark
+    import generate_lockscreen_art  # noqa: F401
+
     for key, v in VARIANTS.items():
         pkg = HERE / key
         (pkg / "contents" / "previews").mkdir(parents=True, exist_ok=True)
+        (pkg / "contents" / "lockscreen").mkdir(parents=True, exist_ok=True)
         (pkg / "metadata.json").write_text(json.dumps(metadata(key, v), indent=4, ensure_ascii=False) + "\n")
-        (pkg / "contents" / "defaults").write_text(DEFAULTS.format(scheme=v["scheme"]))
+        (pkg / "contents" / "defaults").write_text(DEFAULTS.format(scheme=v["scheme"], deco=v["deco"]))
         PLACED.clear()
         svg = desktop(v["palette"])
         prev = pkg / "contents" / "previews"

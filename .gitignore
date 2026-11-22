@@ -1,2 +1,5 @@
 dist/
 .vscode/
+__pycache__/
+*.pyc
+window-decoration/window-perch/build/
