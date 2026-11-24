@@ -48,7 +48,7 @@ fi
 
 # Stop Whiskers systemd services if active
 if systemctl --user is-system-running >/dev/null 2>&1 || [ -e "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/systemd/private" ]; then
-  systemctl --user disable --now whiskers.timer whiskers-watch.service 2>/dev/null || true
+  systemctl --user disable --now whiskers.timer whiskers-watch.service laptime-idle.service 2>/dev/null || true
   systemctl --user daemon-reload 2>/dev/null || true
 fi
 
@@ -79,6 +79,8 @@ is_allowed_suite_path() {
     */icons/hicolor/*/apps/whiskers*)
       return 0 ;;
     */systemd/user/whiskers*)
+      return 0 ;;
+    */bin/laptime-idle|*/systemd/user/laptime-idle.service|*/wallpapers/com.github.techonerd.catnap|*/wallpapers/com.github.techonerd.catnap/*|*/plasma/wallpapers/com.github.techonerd.catnap|*/plasma/wallpapers/com.github.techonerd.catnap/*)
       return 0 ;;
     *)
       return 1 ;;
@@ -276,5 +278,6 @@ Previous desktop configuration keys have been restored (config files preserved).
 Note for Doorstep & Catnap:
   - If Doorstep SDDM login theme was installed with root/sudo:
       sudo rm -rf /usr/share/sddm/themes/doorstep /etc/sddm.conf.d/20-theme.conf
-  - If Catnap lock screen was manually copied into custom paths, remove those files.
+  - Catnap: if it is still your lock-screen wallpaper, pick another one in
+    System Settings → Screen Locking → Appearance.
 MSG

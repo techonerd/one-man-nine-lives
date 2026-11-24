@@ -68,22 +68,20 @@ if [ "$TARGET" = "all" ] || [ "$TARGET" = "doorstep" ] || [ "$TARGET" = "sddm" ]
     $HARNESS tools/harness/doorstep_error.qml sddm/doorstep/preview/doorstep_error.png
     $HARNESS tools/harness/doorstep_capslock.qml sddm/doorstep/preview/doorstep_capslock.png
 
+    echo "Rendering Doorstep easter egg grab states..."
+    $HARNESS tools/harness/doorstep_grab_waiting.qml sddm/doorstep/preview/grab_waiting.png
+    $HARNESS tools/harness/doorstep_grab_watching.qml sddm/doorstep/preview/grab_watching.png
+    $HARNESS tools/harness/doorstep_grab_reaching.qml sddm/doorstep/preview/grab_reaching.png
+    $HARNESS tools/harness/doorstep_grab_grabbed.qml sddm/doorstep/preview/grab_grabbed.png
+    $HARNESS tools/harness/doorstep_grab_released.qml sddm/doorstep/preview/grab_released.png
+
     set_env_light
     $HARNESS tools/harness/doorstep_light.qml sddm/doorstep/preview/doorstep_light.png
 fi
 
 if [ "$TARGET" = "all" ] || [ "$TARGET" = "catnap" ] || [ "$TARGET" = "lockscreen" ]; then
-    echo "Rendering Catnap Lock Screen states (2560x1600)..."
+    echo "Rendering Catnap lock-screen wallpaper..."
     python3 -I look-and-feel/one-man-nine-lives/tools/generate_lockscreen_art.py
-    mkdir -p look-and-feel/one-man-nine-lives/preview
-
-    set_env_dark
-    $HARNESS tools/harness/catnap_dark.qml look-and-feel/one-man-nine-lives/preview/catnap_dark.png
-    $HARNESS tools/harness/catnap_error.qml look-and-feel/one-man-nine-lives/preview/catnap_error.png
-    $HARNESS tools/harness/catnap_capslock.qml look-and-feel/one-man-nine-lives/preview/catnap_capslock.png
-
-    set_env_light
-    $HARNESS tools/harness/catnap_light.qml look-and-feel/one-man-nine-lives/preview/catnap_light.png
 fi
 
 echo "Generating composite previews..."

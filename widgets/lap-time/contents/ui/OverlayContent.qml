@@ -1,11 +1,10 @@
 pragma ComponentBehavior: Bound
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: techonerd
-// Lap Time Overlay Visual Content (Eye break strip & Fullscreen stretch break)
+// Lap Time Overlay Visual Content (Eye break card & Fullscreen stretch break)
 
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents3
 
@@ -13,9 +12,9 @@ Item {
     id: overlayContent
 
     property string breakType: "stretch"
+    readonly property bool isEye: breakType === "eye"
 
-    // Every break uses the same card; only these texts, the Casper picture and the duration
-    // differ. Add a new break by adding an entry here (and a timer in main.qml).
+    // Break definitions: texts, Casper picture and default behavior
     readonly property var breaks: ({
         "eye": {
             title: i18n("Eye break"),
@@ -41,8 +40,8 @@ Item {
     Kirigami.Theme.colorSet: Kirigami.Theme.Window
     Kirigami.Theme.inherit: false
     function tint(c, a) { return Qt.rgba(c.r, c.g, c.b, a) }
-    readonly property bool isDark: (0.2126 * Kirigami.Theme.backgroundColor.r + 0.7152 * Kirigami.Theme.backgroundColor.g
-                                    + 0.0722 * Kirigami.Theme.backgroundColor.b) < 0.5
+    property bool isDark: (0.2126 * Kirigami.Theme.backgroundColor.r + 0.7152 * Kirigami.Theme.backgroundColor.g
+                           + 0.0722 * Kirigami.Theme.backgroundColor.b) < 0.5
     readonly property color monoBg: Kirigami.Theme.backgroundColor
     readonly property color monoFg: Kirigami.Theme.textColor
     readonly property color monoFgMuted: Kirigami.Theme.disabledTextColor
@@ -54,55 +53,46 @@ Item {
     signal skipRequested()
     signal completed()
 
+    readonly property real preferredCardWidth: Math.max(overlayContent.isEye ? Kirigami.Units.gridUnit * 20 : Kirigami.Units.gridUnit * 26,
+                                                        buttonRow.implicitWidth + (overlayContent.isEye ? Kirigami.Units.gridUnit * 2 : Kirigami.Units.gridUnit * 4))
+    readonly property real preferredCardHeight: cardLayout.implicitHeight + (overlayContent.isEye ? Kirigami.Units.gridUnit * 2 : Kirigami.Units.gridUnit * 4)
+
+    implicitWidth: isEye ? preferredCardWidth : Screen.width
+    implicitHeight: isEye ? preferredCardHeight : Screen.height
+
+    Keys.onEscapePressed: overlayContent.skipRequested()
+    Keys.onReturnPressed: overlayContent.completed()
+    Keys.onEnterPressed: overlayContent.completed()
+
     // ----------------------------------------------------
-    // BREAK CARD (full-screen dimmed backdrop, centred card; same for every break)
+    // BREAK CARD (stretch: dimmed full-screen backdrop; eye: smaller non-dimming card)
     // ----------------------------------------------------
     Item {
         id: stretchOverlay
         anchors.fill: parent
 
-        // Dimmed backdrop layer for screen obscuration & blur source
-        Item {
+        // Dimmed backdrop layer for screen obscuration (stretch break only; eye break leaves screen undimmed)
+        Rectangle {
             id: stretchBackdrop
             anchors.fill: parent
-
-            Rectangle {
-                anchors.fill: parent
-                color: overlayContent.tint(overlayContent.monoBg, 0.85)
-            }
+            color: overlayContent.tint(overlayContent.monoBg, 0.85)
+            visible: !overlayContent.isEye
         }
 
-        // Center card with frosted glass
+        // Center card
         Item {
             id: centerCard
-            width: Math.min(parent.width - Kirigami.Units.gridUnit * 4,
-                            Math.max(Kirigami.Units.gridUnit * 26, buttonRow.implicitWidth + Kirigami.Units.gridUnit * 4))
-            height: Math.min(parent.height - Kirigami.Units.gridUnit * 4, cardLayout.implicitHeight + Kirigami.Units.gridUnit * 4)
+            width: (parent.width > 0) ? Math.min(parent.width - (overlayContent.isEye ? 0 : Kirigami.Units.gridUnit * 2), overlayContent.preferredCardWidth) : overlayContent.preferredCardWidth
+            height: (parent.height > 0) ? Math.min(parent.height - (overlayContent.isEye ? 0 : Kirigami.Units.gridUnit * 2), overlayContent.preferredCardHeight) : overlayContent.preferredCardHeight
             anchors.centerIn: parent
 
-            // MultiEffect Frosted Glass Layer
-            Item {
+            // Card background & 1px rim border
+            Rectangle {
                 anchors.fill: parent
-                clip: true
-
-                MultiEffect {
-                    x: -centerCard.x
-                    y: -centerCard.y
-                    width: stretchOverlay.width
-                    height: stretchOverlay.height
-                    source: stretchBackdrop
-                    blurEnabled: true
-                    blur: 0.75
-                }
-
-                // Frosted glass translucent overlay & 1px rim border matching Doorstep
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Kirigami.Units.cornerRadius * 2
-                    color: overlayContent.monoOverlay
-                    border.color: overlayContent.monoRim
-                    border.width: 1
-                }
+                radius: Kirigami.Units.cornerRadius * 2
+                color: overlayContent.isEye ? overlayContent.monoBg : overlayContent.monoOverlay
+                border.color: overlayContent.monoRim
+                border.width: 1
             }
 
             ColumnLayout {
@@ -110,14 +100,14 @@ Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.margins: Kirigami.Units.gridUnit * 2
-                spacing: Kirigami.Units.largeSpacing
+                anchors.margins: overlayContent.isEye ? Kirigami.Units.gridUnit * 1.5 : Kirigami.Units.gridUnit * 2
+                spacing: overlayContent.isEye ? Kirigami.Units.mediumSpacing : Kirigami.Units.largeSpacing
 
                 // Casper resting on your lap
                 Item {
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 10
-                    Layout.preferredHeight: Kirigami.Units.gridUnit * 5.5
+                    Layout.preferredWidth: overlayContent.isEye ? Kirigami.Units.gridUnit * 6 : Kirigami.Units.gridUnit * 10
+                    Layout.preferredHeight: overlayContent.isEye ? Kirigami.Units.gridUnit * 3.5 : Kirigami.Units.gridUnit * 5.5
 
                     Image {
                         anchors.fill: parent
@@ -132,15 +122,14 @@ Item {
                     Layout.fillWidth: true
                     spacing: Kirigami.Units.smallSpacing
 
-                    PlasmaComponents3.Label {
+                    Kirigami.Heading {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignHCenter
                         Layout.alignment: Qt.AlignHCenter
                         text: overlayContent.current.title
                         color: overlayContent.monoFg
-                        font.pointSize: 18
-                        font.weight: Font.Bold
+                        level: overlayContent.isEye ? 2 : 1
                     }
 
                     PlasmaComponents3.Label {
@@ -150,11 +139,11 @@ Item {
                         Layout.alignment: Qt.AlignHCenter
                         text: overlayContent.current.message
                         color: overlayContent.monoFgMuted
-                        font.pointSize: 11
+                        font: Kirigami.Theme.defaultFont
                     }
                 }
 
-                // Countdown Timer Display (amber accent)
+                // Countdown Timer Display
                 PlasmaComponents3.Label {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
@@ -165,8 +154,8 @@ Item {
                         var s = overlayContent.remainingSec % 60
                         return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s
                     }
-                    color: overlayContent.amberAccent
-                    font.pointSize: 36
+                    color: overlayContent.monoFg
+                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * (overlayContent.isEye ? 2.5 : 3.5)
                     font.weight: Font.DemiBold
                 }
 
@@ -177,7 +166,7 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                     text: i18n("Tip: %1", overlayContent.current.tip)
                     color: overlayContent.monoFgMuted
-                    font.pointSize: 10
+                    font.pointSize: Kirigami.Theme.smallFont.pointSize
                     font.italic: true
                 }
 
@@ -185,16 +174,15 @@ Item {
                 RowLayout {
                     id: buttonRow
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.topMargin: Kirigami.Units.largeSpacing
-                    spacing: Kirigami.Units.largeSpacing
+                    Layout.topMargin: overlayContent.isEye ? Kirigami.Units.mediumSpacing : Kirigami.Units.largeSpacing
+                    spacing: overlayContent.isEye ? Kirigami.Units.mediumSpacing : Kirigami.Units.largeSpacing
 
                     // Snooze Button
                     PlasmaComponents3.Button {
                         icon.name: "alarm-symbolic"
-                        icon.color: overlayContent.monoFg
-                        text: i18n("Snooze (%1m)", overlayContent.snoozeMin)
-                        Kirigami.Theme.inherit: false
-                        Kirigami.Theme.textColor: overlayContent.monoFg
+                        text: i18nc("@action:button %1 is minutes, %2 is count left", "Snooze (%1 min, %2 left)",
+                                    overlayContent.snoozeMin,
+                                    Math.max(0, overlayContent.maxSnoozes - overlayContent.snoozeCount))
                         enabled: overlayContent.snoozeCount < overlayContent.maxSnoozes
                         onClicked: overlayContent.snoozeRequested()
                     }
@@ -202,21 +190,17 @@ Item {
                     // Skip Button
                     PlasmaComponents3.Button {
                         icon.name: "media-skip-forward"
-                        icon.color: overlayContent.monoFg
                         text: i18n("Skip (Esc)")
-                        Kirigami.Theme.inherit: false
-                        Kirigami.Theme.textColor: overlayContent.monoFg
                         onClicked: overlayContent.skipRequested()
                     }
 
                     // I'm on it / Done Button
                     PlasmaComponents3.Button {
+                        id: doneButton
                         icon.name: "dialog-ok"
-                        icon.color: overlayContent.monoFg
                         text: i18n("I'm on it")
-                        Kirigami.Theme.inherit: false
-                        Kirigami.Theme.textColor: overlayContent.monoFg
                         highlighted: true
+                        focus: true
                         onClicked: overlayContent.completed()
                     }
                 }

@@ -11,7 +11,7 @@ run() {
   [[ -r $LIST ]] || return 0
   # Only trust a list that you own and nobody else can write to, because it contains commands
   if [[ $(stat -c %u "$LIST") != "$(id -u)" ]] || [[ $(stat -c %A "$LIST") == ?????w* || $(stat -c %A "$LIST") == ????????w? ]]; then
-    emit releases error "Release list ignored" "$LIST must be owned by you and not writable by others." "chmod go-w $LIST"; return
+    emit releases error "Whiskers skipped your release list" "Other users on this computer could change it, so Whiskers won't run it. The fix below makes it yours only." "chmod go-w $LIST"; return
   fi
   local name="" repo="" installed="" update="" line k v
   flush() {

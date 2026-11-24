@@ -53,11 +53,37 @@ All states rendered offscreen to the `preview/` subfolder:
 ```bash
 $ tools/render.sh doorstep
 Rendering Doorstep SDDM states (2560x1600)...
-Generated friendly Casper Mono Doorstep SVG assets successfully.
+Generated Casper Mono Doorstep SVG assets and parts successfully.
 Successfully rendered: sddm/doorstep/preview/doorstep_dark.png (2560x1600)
 Successfully rendered: sddm/doorstep/preview/doorstep_error.png (2560x1600)
 Successfully rendered: sddm/doorstep/preview/doorstep_capslock.png (2560x1600)
+Rendering Doorstep easter egg grab states...
+Successfully rendered: sddm/doorstep/preview/grab_waiting.png (2560x1600)
+Successfully rendered: sddm/doorstep/preview/grab_watching.png (2560x1600)
+Successfully rendered: sddm/doorstep/preview/grab_reaching.png (2560x1600)
+Successfully rendered: sddm/doorstep/preview/grab_grabbed.png (2560x1600)
+Successfully rendered: sddm/doorstep/preview/grab_released.png (2560x1600)
 Successfully rendered: sddm/doorstep/preview/doorstep_light.png (2560x1600)
+Generated composite preview: sddm/doorstep/preview/preview.png (3000x1200)
+```
+
+---
+
+## Casper Grabs the Cursor Easter Egg
+
+The sitting cat in the bottom-right corner is implemented in `CasperGrabber.qml`:
+- **States**: `waiting` → `watching` → `reaching` → `grabbed` → `released`.
+  - **Outer Zone**: Hover-only `MouseArea` (`acceptedButtons: Qt.NoButton`, `preventStealing: false`, never steals focus or clicks). Head and eyes turn toward cursor (`Math.atan2`, clamped to ±75°). Eyes stay open (`eyes-open.svg`).
+  - **Inner Zone**: Arm rotates toward cursor. After 2s in reaching, the arm extends further (`scale: 1.35` with `Kirigami.Units.longDuration` easing).
+  - **Grab Zone**: When cursor touches paw tip, state transitions to `grabbed` for 2 seconds. The zone sets `cursorShape: Qt.BlankCursor` and displays `paw-holding-cursor.svg`. After 2 seconds, state transitions to `released` (`paw-open.svg`, cursor restored).
+  - **Tail Swish**: Idle tail swish cycles frames `tail-0.svg` .. `tail-5.svg` slowly (220ms per frame) during `waiting`. Swishing stops while `grabbed`.
+  - **Accessibility & Focus**: Decorative only (`Accessible.ignored: true`). Never takes focus or steals clicks from login fields.
+  - **Animation Control**: Uses `Behavior`/`NumberAnimation` with `Kirigami.Units.shortDuration` / `longDuration`, automatically disabled when user disables animations.
+  - **Config Toggle**: `theme.conf` property `playfulCat=true` (setting to `false` disables interaction and shows the static cat).
+- **Art Contract & Modular Parts**:
+  - Art specification defined in `art/casper-parts/README.md`.
+  - QML loads parts strictly from `casper/<variant>/` (`body.svg`, `head.svg`, `eyes-open.svg`, `eyes-closed.svg`, `arm.svg`, `paw-open.svg`, `paw-closed.svg`, `paw-holding-cursor.svg`, `tail-0..5.svg`).
+  - Allows final Illustrator art to drop directly into `casper/{dark,light}/` with zero code modifications.
 Generating composite previews...
 Generated composite preview: /home/techonerd/one-man-nine-lives/sddm/doorstep/preview/preview.png (3000x1200)
 Done rendering previews.

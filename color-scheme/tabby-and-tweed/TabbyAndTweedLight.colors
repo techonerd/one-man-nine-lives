@@ -43,10 +43,10 @@ DecorationHover=184,98,30
 ForegroundActive=232,162,86
 ForegroundInactive=160,160,160
 ForegroundLink=232,162,86
-ForegroundNegative=168,52,52
-ForegroundNeutral=143,86,11
+ForegroundNegative=240,128,122
+ForegroundNeutral=240,179,91
 ForegroundNormal=230,230,230
-ForegroundPositive=45,110,70
+ForegroundPositive=115,198,148
 ForegroundVisited=240,184,117
 
 [Colors:Header]

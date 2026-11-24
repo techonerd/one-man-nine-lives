@@ -163,13 +163,13 @@ def render(svg: str, outs: list) -> None:
 
 
 def main() -> int:
-    # Generate lockscreen art for light and dark
-    import generate_lockscreen_art  # noqa: F401
+    # Catnap: the lock-screen wallpaper package
+    import generate_lockscreen_art
+    generate_lockscreen_art.main()
 
     for key, v in VARIANTS.items():
         pkg = HERE / key
         (pkg / "contents" / "previews").mkdir(parents=True, exist_ok=True)
-        (pkg / "contents" / "lockscreen").mkdir(parents=True, exist_ok=True)
         (pkg / "metadata.json").write_text(json.dumps(metadata(key, v), indent=4, ensure_ascii=False) + "\n")
         (pkg / "contents" / "defaults").write_text(DEFAULTS.format(scheme=v["scheme"], deco=v["deco"]))
         PLACED.clear()

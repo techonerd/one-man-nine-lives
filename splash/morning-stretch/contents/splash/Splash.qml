@@ -8,10 +8,11 @@
 */
 
 import QtQuick
+import org.kde.kirigami as Kirigami
 
 Rectangle {
     id: root
-    color: "black"              // fills the area around the animation: no stretching
+    color: "black"              // plasma-polish: allow hard-colour morning-stretch.gif has pure black (0,0,0) edges; palette #141414 causes visible seam
 
     property int stage          // set by ksplashqml as the session starts
 
@@ -28,14 +29,14 @@ Rectangle {
         smooth: true            // set to false for a sharper but more pixelated look when upscaled
     }
 
-    // Original loader at the bottom (same size/position as the Plasma 5 version)
+    // Spinning Yarn: the loader under the animation (a braided yarn ring around Casper)
     AnimatedImage {
         id: busyIndicator
-        width: 75
-        height: 75
-        y: parent.height - 150
+        width: Kirigami.Units.gridUnit * 4
+        height: Kirigami.Units.gridUnit * 4
+        y: parent.height - Kirigami.Units.gridUnit * 8
         anchors.horizontalCenter: parent.horizontalCenter
-        source: "images/busy.gif"
+        source: "images/spinning-yarn.gif"
         fillMode: Image.PreserveAspectFit
         cache: false
         asynchronous: false

@@ -227,7 +227,7 @@ PlasmoidItem {
                     icon.name: "view-refresh"
                     enabled: !root.busy
                     display: PlasmaComponents.AbstractButton.IconOnly
-                    text: i18n("Check now")
+                    text: i18n("Check Now")
                     onClicked: root.refresh()
                     PlasmaComponents.ToolTip.text: text
                     PlasmaComponents.ToolTip.visible: hovered
@@ -256,6 +256,18 @@ PlasmoidItem {
                 bottomMargin: Kirigami.Units.largeSpacing
                 leftMargin: Kirigami.Units.largeSpacing
                 rightMargin: Kirigami.Units.largeSpacing
+
+                header: Kirigami.InlineMessage {
+                    width: ListView.view.width - ListView.view.leftMargin - ListView.view.rightMargin
+                    visible: root.lastError !== "" && rows.count > 0
+                    type: Kirigami.MessageType.Warning
+                    text: i18n("Couldn't check just now. These results are from %1.", root.ago(root.report ? root.report.checked_at : 0))
+                    actions: Kirigami.Action {
+                        text: i18n("Try Again")
+                        icon.name: "view-refresh"
+                        onTriggered: root.refresh()
+                    }
+                }
 
                 section.property: "section"
                 section.delegate: PlasmaExtras.Heading {
@@ -319,7 +331,7 @@ PlasmoidItem {
                             PlasmaComponents.Label {
                                 visible: card.time > 0
                                 text: root.ago(card.time)
-                                opacity: 0.6
+                                opacity: 0.7
                                 font: Kirigami.Theme.smallFont
                             }
                         }
@@ -351,18 +363,28 @@ PlasmoidItem {
                                     text: card.fix
                                     textFormat: Text.PlainText
                                     wrapMode: Text.WrapAnywhere
-                                    font.family: "monospace"
-                                    font.pointSize: Kirigami.Theme.smallFont.pointSize
+                                    font: Kirigami.Theme.fixedWidthFont
                                 }
                             }
                             PlasmaComponents.ToolButton {
-                                icon.name: "edit-copy"
+                                id: copyBtn
+                                property bool copied: false
+                                icon.name: copied ? "checkmark" : "edit-copy"
                                 display: PlasmaComponents.AbstractButton.IconOnly
-                                text: i18n("Copy")
+                                text: copied ? i18n("Copied") : i18n("Copy")
                                 Layout.alignment: Qt.AlignTop
-                                onClicked: root.copyText(card.fix)
-                                PlasmaComponents.ToolTip.text: i18n("Copy command")
+                                onClicked: {
+                                    root.copyText(card.fix)
+                                    copied = true
+                                    copyResetTimer.restart()
+                                }
+                                PlasmaComponents.ToolTip.text: copied ? i18n("Copied") : i18n("Copy command")
                                 PlasmaComponents.ToolTip.visible: hovered
+                                Timer {
+                                    id: copyResetTimer
+                                    interval: Kirigami.Units.humanMoment
+                                    onTriggered: copyBtn.copied = false
+                                }
                             }
                         }
                         PlasmaComponents.Label {
@@ -374,7 +396,7 @@ PlasmoidItem {
                             wrapMode: Text.Wrap
                             maximumLineCount: 2
                             elide: Text.ElideRight
-                            opacity: 0.5
+                            opacity: 0.7
                             font: Kirigami.Theme.smallFont
                         }
                     }

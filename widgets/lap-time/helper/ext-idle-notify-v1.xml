@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Interface definitions for the ext-idle-notify-v1 Wayland protocol (version 2),
+     written from the published protocol specification. Only what laptime-idle uses. -->
+<protocol name="ext_idle_notify_v1">
+  <interface name="ext_idle_notifier_v1" version="2">
+    <request name="destroy" type="destructor"/>
+    <request name="get_idle_notification">
+      <arg name="id" type="new_id" interface="ext_idle_notification_v1"/>
+      <arg name="timeout" type="uint"/>
+      <arg name="seat" type="object" interface="wl_seat"/>
+    </request>
+    <request name="get_input_idle_notification" since="2">
+      <arg name="id" type="new_id" interface="ext_idle_notification_v1"/>
+      <arg name="timeout" type="uint"/>
+      <arg name="seat" type="object" interface="wl_seat"/>
+    </request>
+  </interface>
+  <interface name="ext_idle_notification_v1" version="2">
+    <request name="destroy" type="destructor"/>
+    <event name="idled"/>
+    <event name="resumed"/>
+  </interface>
+</protocol>

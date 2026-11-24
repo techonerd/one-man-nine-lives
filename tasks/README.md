@@ -19,8 +19,10 @@ Task briefs for AI agents (Antigravity, VS Code agents, Claude). **One task per 
 | 5 | [Laser Pointer](laser-pointer.md): cursors | `cursors/laser-pointer/` | low |
 | 6 | [Thumbs & Paws, redesign](thumbs-and-paws.md): "cat that won't let you work" icon set | `icons/thumbs-and-paws/` | low |
 | 7 | [Doorstep](doorstep.md): SDDM login screen | `sddm/doorstep/` | medium: owner tests in a window first |
-| 8 | [Catnap](catnap.md): lock screen | `look-and-feel/one-man-nine-lives/` | **high**: a broken lock screen can lock you out; owner tests only in a window |
+| 8 | [Catnap](catnap.md): lock-screen wallpaper for the Breeze lock screen (done) | `look-and-feel/one-man-nine-lives/catnap/` | low |
 | 10 | [Lap Time](lap-time.md): break reminder with Casper overlay | `widgets/lap-time/` | low |
+| 11 | [UI polish](ui-polish.md): findings from the plasma-polish review, one agent task per finding group (W, L, N, S, D, T) | several | low; review each with `plasma-polish review` |
+| 12 | [Catnap, animated](catnap.md#phase-2-animated-catnap): sleeping Casper with a swishing tail, as an animated lock-screen wallpaper | `look-and-feel/one-man-nine-lives/` | low |
 | 9 | [Media overhaul](media.md): Casper model sheet, wallpapers, Doorstep/Catnap art, icons, cursors, sounds, branding (phased) | `art/`, `wallpapers/`, `icons/`, `cursors/`, `sounds/`, `sddm/`, `splash/` | low |
 
 ## Safe test tools on this machine

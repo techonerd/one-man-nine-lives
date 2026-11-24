@@ -8,6 +8,7 @@ import QtQuick.Layouts
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components as PlasmaComponents3
+import org.kde.plasma.extras as PlasmaExtras
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasma5support as Plasma5Support
 
@@ -21,8 +22,8 @@ PlasmoidItem {
     readonly property color amberAccent: Kirigami.Theme.highlightColor
 
     readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
-    readonly property bool isDark: (0.2126 * Kirigami.Theme.backgroundColor.r + 0.7152 * Kirigami.Theme.backgroundColor.g
-                                    + 0.0722 * Kirigami.Theme.backgroundColor.b) < 0.5
+    property bool isDark: (0.2126 * Kirigami.Theme.backgroundColor.r + 0.7152 * Kirigami.Theme.backgroundColor.g
+                           + 0.0722 * Kirigami.Theme.backgroundColor.b) < 0.5
 
     // Safe Configuration Access (works inside Plasma and test harness)
     readonly property var config: (typeof Plasmoid !== "undefined" && Plasmoid.configuration) ? Plasmoid.configuration : null
@@ -78,23 +79,39 @@ PlasmoidItem {
     // DATA ENGINES (Plasma5Support): Idle Time & Lock/DND
     // ----------------------------------------------------
 
-    // 1. Idle time tracking via powermanagement UserActivity
+    // 1. Idle time from the laptime-idle helper (real keyboard/mouse/touch input only;
+    //    playing music or video doesn't count as activity). Plasma's own idle time can't be
+    //    polled on Wayland, so without the helper Lap Time counts all unlocked time as work.
+    property bool idleHelperRunning: false
     Plasma5Support.DataSource {
-        id: pmSource
-        engine: "powermanagement"
-        connectedSources: ["UserActivity"]
-        interval: 5000 // every 5 seconds
+        id: idleSource
+        engine: "executable"
+        connectedSources: []
+        readonly property string cmd: "cat \"$XDG_RUNTIME_DIR/laptime-idle\" 2>/dev/null || echo missing"
 
-        onDataChanged: {
-            var ua = data["UserActivity"]
-            if (ua && ua["IdleTime"] !== undefined) {
-                root.userIdleMs = parseInt(ua["IdleTime"], 10) || 0
-                // Auto-break detection: if idle for longer than stretch length, count as taken
-                if (root.userIdleMs > (root.stretchLengthSec * 1000) && root.activeBreakType === "stretch") {
-                    root.completeActiveBreak()
-                }
+        onNewData: (sourceName, sourceData) => {
+            var out = (sourceData["stdout"] || "").trim()
+            if (out.indexOf("idle ") === 0) {
+                root.idleHelperRunning = true
+                root.userIdleMs = Math.max(0, Date.now() - (parseInt(out.substring(5), 10) || Date.now()))
+            } else {
+                root.idleHelperRunning = (out === "active")
+                root.userIdleMs = 0
             }
+            // Away for longer than the stretch break: count the break as taken
+            if (root.userIdleMs > (root.stretchLengthSec * 1000) && root.activeBreakType === "stretch") {
+                root.completeActiveBreak()
+            }
+            idleSource.disconnectSource(sourceName)
         }
+    }
+
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: idleSource.connectSource(idleSource.cmd)
     }
 
     // 2. Lock & DND polling via executable engine
@@ -155,6 +172,14 @@ PlasmoidItem {
 
             // Only count work when not paused, screen is unlocked, and user is active
             var isWorking = !root.isPaused && !root.isScreenLocked && !root.isUserIdle
+
+            // Away from the keyboard for at least a break's length: that break was taken
+            if (root.activeBreakType === "") {
+                if (root.userIdleMs >= root.eyeLengthSec * 1000)
+                    root.eyeSecRemaining = root.eyeIntervalSec
+                if (root.userIdleMs >= root.stretchLengthSec * 1000)
+                    root.stretchSecRemaining = root.stretchIntervalSec
+            }
 
             if (isWorking && root.activeBreakType === "") {
                 // Increment today's work time
@@ -305,15 +330,15 @@ PlasmoidItem {
         if (sec <= 0) return i18n("now")
         var m = Math.floor(sec / 60)
         var s = sec % 60
-        if (m === 0) return i18n("%1s", s)
-        return i18n("%1m %2s", m, s)
+        if (m === 0) return i18nc("seconds", "%1 s", s)
+        return i18nc("minutes and seconds", "%1 min %2 s", m, s)
     }
 
     function formatHoursMin(totalSec) {
         var h = Math.floor(totalSec / 3600)
         var m = Math.floor((totalSec % 3600) / 60)
-        if (h === 0) return i18n("%1m", m)
-        return i18n("%1h %2m", h, m)
+        if (h === 0) return i18nc("minutes", "%1 min", m)
+        return i18nc("hours and minutes", "%1 h %2 min", h, m)
     }
 
     // Full representation colors strictly adhering to Tabby & Tweed / Casper Mono
@@ -330,7 +355,7 @@ PlasmoidItem {
     // Tooltip configuration
     toolTipMainText: i18n("Lap Time")
     toolTipSubText: {
-        if (root.isPaused) return i18n("Paused until %1", Qt.formatTime(root.pauseUntil, "hh:mm"))
+        if (root.isPaused && root.pauseUntil) return i18n("Paused until %1", Qt.formatTime(root.pauseUntil, "hh:mm"))
         return i18n("Next %1: %2 | Next %3: %4\nWorked today: %5",
                     root.eyeLabel, root.formatTimeRemaining(root.eyeSecRemaining),
                     root.stretchLabel, root.formatTimeRemaining(root.stretchSecRemaining),
@@ -404,14 +429,14 @@ PlasmoidItem {
     fullRepresentation: Item {
         id: popupRoot
         implicitWidth: Kirigami.Units.gridUnit * 20
-        implicitHeight: Kirigami.Units.gridUnit * 23
+        implicitHeight: Math.max(Kirigami.Units.gridUnit * 23, popupLayout.implicitHeight + Kirigami.Units.gridUnit * 2)
         Layout.minimumWidth: Kirigami.Units.gridUnit * 18
         Layout.minimumHeight: Kirigami.Units.gridUnit * 20
         Layout.preferredWidth: implicitWidth
         Layout.preferredHeight: implicitHeight
 
-
         ColumnLayout {
+            id: popupLayout
             anchors.fill: parent
             anchors.margins: Kirigami.Units.gridUnit
             spacing: Kirigami.Units.largeSpacing
@@ -429,18 +454,17 @@ PlasmoidItem {
                     color: root.monoFg
                 }
 
-                PlasmaComponents3.Label {
+                PlasmaExtras.Heading {
+                    level: 3
                     text: i18n("Lap Time")
-                    font.pointSize: 13
-                    font.weight: Font.DemiBold
                     Layout.fillWidth: true
                     color: root.monoFg
                 }
 
                 Rectangle {
                     radius: Kirigami.Units.cornerRadius
-                    Layout.preferredHeight: 22
-                    Layout.preferredWidth: statusText.implicitWidth + 12
+                    implicitHeight: statusText.implicitHeight + Kirigami.Units.smallSpacing
+                    implicitWidth: statusText.implicitWidth + Kirigami.Units.largeSpacing
                     color: root.isPaused
                         ? root.tint(Kirigami.Theme.neutralTextColor, 0.18)
                         : (root.isUserIdle ? root.tint(Kirigami.Theme.neutralTextColor, 0.18) : root.tint(Kirigami.Theme.positiveTextColor, 0.18))
@@ -451,7 +475,7 @@ PlasmoidItem {
                         id: statusText
                         anchors.centerIn: parent
                         text: root.isPaused ? i18n("Paused") : (root.isUserIdle ? i18n("Idle") : i18n("Tracking"))
-                        font.pointSize: 8
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
                         font.weight: Font.Bold
                         color: root.isPaused
                             ? Kirigami.Theme.neutralTextColor
@@ -460,16 +484,33 @@ PlasmoidItem {
                 }
             }
 
+            // Warning banner if idle tracking helper is not running
+            Kirigami.InlineMessage {
+                Layout.fillWidth: true
+                type: Kirigami.MessageType.Warning
+                visible: !root.idleHelperRunning
+                text: i18n("Lap Time can't tell when you're away, so time away counts as work.")
+                actions: [
+                    Kirigami.Action {
+                        text: i18n("How to Fix")
+                        icon.name: "help-browser"
+                        onTriggered: Qt.openUrlExternally("https://github.com/techonerd/one-man-nine-lives/blob/main/widgets/lap-time/README.md#idle-tracking-laptime-idle-helper")
+                    }
+                ]
+            }
+
             // Card 1: Eye Break
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 64
+                implicitHeight: eyeCardLayout.implicitHeight + Kirigami.Units.largeSpacing
                 radius: Kirigami.Units.cornerRadius
+                clip: true
                 color: root.tint(root.monoFg, 0.04)
                 border.color: root.tint(Kirigami.Theme.textColor, 0.12)
                 border.width: 1
 
                 RowLayout {
+                    id: eyeCardLayout
                     anchors.fill: parent
                     anchors.margins: Kirigami.Units.smallSpacing * 1.5
 
@@ -485,31 +526,41 @@ PlasmoidItem {
 
                         PlasmaComponents3.Label {
                             text: root.eyeEnabled ? i18n("in %1", root.formatTimeRemaining(root.eyeSecRemaining)) : i18n("Disabled")
-                            color: root.eyeEnabled ? root.amberAccent : root.monoMuted
-                            font.pointSize: 9
+                            color: root.eyeEnabled ? root.monoFg : root.monoMuted
+                            font: Kirigami.Theme.smallFont
                         }
                     }
 
                     PlasmaComponents3.Button {
-                        text: i18n("Take now")
+                        text: i18n("Take Now")
                         enabled: root.eyeEnabled && root.activeBreakType === ""
-                        Kirigami.Theme.inherit: false
-                        Kirigami.Theme.textColor: root.monoFg
                         onClicked: root.triggerEyeBreak()
                     }
+                }
+
+                // Accent progress indicator along card bottom
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.bottom: parent.bottom
+                    height: 2
+                    width: parent.width * Math.max(0.0, Math.min(1.0, 1.0 - (root.eyeSecRemaining / Math.max(1, root.eyeIntervalSec))))
+                    color: root.amberAccent
+                    visible: root.eyeEnabled
                 }
             }
 
             // Card 2: Stretch Break
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 64
+                implicitHeight: stretchCardLayout.implicitHeight + Kirigami.Units.largeSpacing
                 radius: Kirigami.Units.cornerRadius
+                clip: true
                 color: root.tint(root.monoFg, 0.04)
                 border.color: root.tint(Kirigami.Theme.textColor, 0.12)
                 border.width: 1
 
                 RowLayout {
+                    id: stretchCardLayout
                     anchors.fill: parent
                     anchors.margins: Kirigami.Units.smallSpacing * 1.5
 
@@ -525,18 +576,26 @@ PlasmoidItem {
 
                         PlasmaComponents3.Label {
                             text: root.stretchEnabled ? i18n("in %1", root.formatTimeRemaining(root.stretchSecRemaining)) : i18n("Disabled")
-                            color: root.stretchEnabled ? root.amberAccent : root.monoMuted
-                            font.pointSize: 9
+                            color: root.stretchEnabled ? root.monoFg : root.monoMuted
+                            font: Kirigami.Theme.smallFont
                         }
                     }
 
                     PlasmaComponents3.Button {
-                        text: i18n("Take now")
+                        text: i18n("Take Now")
                         enabled: root.stretchEnabled && root.activeBreakType === ""
-                        Kirigami.Theme.inherit: false
-                        Kirigami.Theme.textColor: root.monoFg
                         onClicked: root.triggerStretchBreak()
                     }
+                }
+
+                // Accent progress indicator along card bottom
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.bottom: parent.bottom
+                    height: 2
+                    width: parent.width * Math.max(0.0, Math.min(1.0, 1.0 - (root.stretchSecRemaining / Math.max(1, root.stretchIntervalSec))))
+                    color: root.amberAccent
+                    visible: root.stretchEnabled
                 }
             }
 
@@ -549,10 +608,7 @@ PlasmoidItem {
                     Layout.fillWidth: true
                     visible: !root.isPaused
                     icon.name: "media-playback-pause"
-                    icon.color: root.monoFg
-                    text: i18n("Pause 1h")
-                    Kirigami.Theme.inherit: false
-                    Kirigami.Theme.textColor: root.monoFg
+                    text: i18n("Pause for 1 Hour")
                     onClicked: root.pauseForHours(1)
                 }
 
@@ -560,10 +616,7 @@ PlasmoidItem {
                     Layout.fillWidth: true
                     visible: !root.isPaused
                     icon.name: "appointment-recurring"
-                    icon.color: root.monoFg
-                    text: i18n("Until tomorrow")
-                    Kirigami.Theme.inherit: false
-                    Kirigami.Theme.textColor: root.monoFg
+                    text: i18n("Pause Until Tomorrow")
                     onClicked: root.pauseUntilTomorrow()
                 }
 
@@ -571,10 +624,7 @@ PlasmoidItem {
                     Layout.fillWidth: true
                     visible: root.isPaused
                     icon.name: "media-playback-start"
-                    icon.color: root.monoFg
                     text: i18n("Resume Tracking")
-                    Kirigami.Theme.inherit: false
-                    Kirigami.Theme.textColor: root.monoFg
                     highlighted: true
                     onClicked: root.resumeWork()
                 }
@@ -585,13 +635,14 @@ PlasmoidItem {
             // Today's Ergonomics Stats
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 68
+                implicitHeight: statsRowLayout.implicitHeight + Kirigami.Units.largeSpacing
                 radius: Kirigami.Units.cornerRadius
                 color: root.tint(root.monoFg, 0.04)
                 border.color: root.tint(Kirigami.Theme.textColor, 0.12)
                 border.width: 1
 
                 RowLayout {
+                    id: statsRowLayout
                     anchors.fill: parent
                     anchors.margins: Kirigami.Units.smallSpacing
 
@@ -600,18 +651,17 @@ PlasmoidItem {
                         Layout.alignment: Qt.AlignHCenter
                         spacing: 2
 
-                        PlasmaComponents3.Label {
+                        PlasmaExtras.Heading {
+                            level: 4
                             Layout.alignment: Qt.AlignHCenter
                             text: root.formatHoursMin(root.statsWorkSec)
-                            font.weight: Font.Bold
-                            font.pointSize: 12
                             color: root.monoFg
                         }
 
                         PlasmaComponents3.Label {
                             Layout.alignment: Qt.AlignHCenter
                             text: i18n("Worked")
-                            font.pointSize: 8
+                            font: Kirigami.Theme.smallFont
                             color: root.monoMuted
                         }
                     }
@@ -627,19 +677,30 @@ PlasmoidItem {
                         Layout.alignment: Qt.AlignHCenter
                         spacing: 2
 
-                        PlasmaComponents3.Label {
+                        PlasmaExtras.Heading {
+                            level: 4
                             Layout.alignment: Qt.AlignHCenter
                             text: String(root.statsBreaksTaken)
-                            font.weight: Font.Bold
-                            font.pointSize: 12
-                            color: Kirigami.Theme.positiveTextColor
+                            color: root.monoFg
                         }
 
-                        PlasmaComponents3.Label {
+                        RowLayout {
                             Layout.alignment: Qt.AlignHCenter
-                            text: i18n("Taken")
-                            font.pointSize: 8
-                            color: root.monoMuted
+                            spacing: 2
+
+                            Kirigami.Icon {
+                                source: "checkmark"
+                                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                                Layout.preferredHeight: Layout.preferredWidth
+                                color: Kirigami.Theme.positiveTextColor
+                                isMask: true
+                            }
+
+                            PlasmaComponents3.Label {
+                                text: i18n("Taken")
+                                font: Kirigami.Theme.smallFont
+                                color: root.monoMuted
+                            }
                         }
                     }
 
@@ -654,19 +715,30 @@ PlasmoidItem {
                         Layout.alignment: Qt.AlignHCenter
                         spacing: 2
 
-                        PlasmaComponents3.Label {
+                        PlasmaExtras.Heading {
+                            level: 4
                             Layout.alignment: Qt.AlignHCenter
                             text: String(root.statsBreaksSkipped)
-                            font.weight: Font.Bold
-                            font.pointSize: 12
-                            color: Kirigami.Theme.neutralTextColor
+                            color: root.monoFg
                         }
 
-                        PlasmaComponents3.Label {
+                        RowLayout {
                             Layout.alignment: Qt.AlignHCenter
-                            text: i18n("Skipped")
-                            font.pointSize: 8
-                            color: root.monoMuted
+                            spacing: 2
+
+                            Kirigami.Icon {
+                                source: "media-skip-forward"
+                                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                                Layout.preferredHeight: Layout.preferredWidth
+                                color: Kirigami.Theme.neutralTextColor
+                                isMask: true
+                            }
+
+                            PlasmaComponents3.Label {
+                                text: i18n("Skipped")
+                                font: Kirigami.Theme.smallFont
+                                color: root.monoMuted
+                            }
                         }
                     }
                 }

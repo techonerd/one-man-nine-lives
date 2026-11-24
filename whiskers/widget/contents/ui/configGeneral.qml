@@ -158,6 +158,7 @@ KCM.SimpleKCM {
                             }
                         }
                         QQC2.Switch {
+                            Accessible.name: i18nc("@action:switch %1 is a check name", "Watch %1", checkCard.modelData.name)
                             checked: checkCard.modelData.enabled && checkCard.modelData.applies
                             onToggled: page.save(checkCard.modelData.id + ".enabled", checked)
                         }
@@ -176,6 +177,7 @@ KCM.SimpleKCM {
                                 Kirigami.FormData.label: modelData.label + ":"
 
                                 QQC2.SpinBox {
+                                    Accessible.name: optRow.modelData.label
                                     visible: optRow.modelData.type === "int"
                                     from: optRow.modelData.min !== undefined ? optRow.modelData.min : 0
                                     to: optRow.modelData.max !== undefined ? optRow.modelData.max : 100000
@@ -183,6 +185,7 @@ KCM.SimpleKCM {
                                     onValueModified: page.save(optRow.key, value)
                                 }
                                 QQC2.CheckBox {
+                                    Accessible.name: optRow.modelData.label
                                     visible: optRow.modelData.type === "bool"
                                     checked: optRow.modelData.value === "true"
                                     onToggled: page.save(optRow.key, checked)
@@ -216,7 +219,7 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.topMargin: Kirigami.Units.largeSpacing
             wrapMode: Text.Wrap
-            opacity: 0.6
+            opacity: 0.7
             text: i18n("Add your own checks as small scripts in ~/.config/whiskers/checks.d/. They appear here automatically.")
         }
     }

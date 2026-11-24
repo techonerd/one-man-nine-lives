@@ -16,7 +16,7 @@ run() {
   if grep -qiE '^[[:space:]]*QuickbootFileBacked[[:space:]]*=[[:space:]]*off' "$HOME/.android/advancedFeatures.ini" 2>/dev/null; then
     emit emulator ok "Android emulator" "Set up to keep its memory in RAM, not on disk."
   else
-    emit emulator info "Android emulator setting" "Quick Boot file-backed RAM is on, so the next emulator run will write heavily to your SSD." "${FIX#Close the emulator, then: }"
+    emit emulator info "Android emulator setting" "The emulator is set to save its memory to your SSD, which wears it out." "${FIX#Close the emulator, then: }"
   fi
 }
 plugin_main "$@"

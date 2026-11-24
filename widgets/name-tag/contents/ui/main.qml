@@ -35,6 +35,7 @@ PlasmoidItem {
     readonly property int cfgMaxLength: config ? config.max_length : 30       // % of screen width (fit mode)
     readonly property bool cfgThisScreen: config ? config.only_this_screen : true
     readonly property bool cfgMouseActions: config ? config.mouse_actions : true
+    readonly property bool cfgMiddleClickClose: config ? config.middle_click_close : false
     readonly property int cfgEmptyMode: config ? config.empty_text_mode : 0
     readonly property string cfgEmptyCustomText: (config && config.empty_custom_text) || ""
 
@@ -127,13 +128,15 @@ PlasmoidItem {
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-            enabled: root.cfgMouseActions && root.hasActiveWindow && root.simulatedTitle === ""
+            enabled: (root.cfgMouseActions || root.cfgMiddleClickClose) && root.hasActiveWindow && root.simulatedTitle === ""
+            Accessible.role: Accessible.Button
+            Accessible.name: root.currentTitle
             onDoubleClicked: (mouse) => {
-                if (mouse.button === Qt.LeftButton)
+                if (mouse.button === Qt.LeftButton && root.cfgMouseActions)
                     tasksModel.requestToggleMaximized(root.activeIndex);
             }
             onClicked: (mouse) => {
-                if (mouse.button === Qt.MiddleButton)
+                if (mouse.button === Qt.MiddleButton && root.cfgMiddleClickClose)
                     tasksModel.requestClose(root.activeIndex);
             }
         }

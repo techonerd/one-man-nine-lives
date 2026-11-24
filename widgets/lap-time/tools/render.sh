@@ -42,6 +42,7 @@ $HARNESS widgets/lap-time/tools/harness/panel_light.qml "$PREV/panel_light.png" 
 echo "Rendering Lap Time Popup dialogs..."
 $HARNESS widgets/lap-time/tools/harness/popup_dark.qml "$PREV/popup_dark.png" 420 500
 $HARNESS widgets/lap-time/tools/harness/popup_light.qml "$PREV/popup_light.png" 420 500
+$HARNESS widgets/lap-time/tools/harness/popup_large_font.qml "$PREV/popup_large_font.png" 480 580
 
 echo "Rendering Eye Break strips (1920x1080)..."
 $HARNESS widgets/lap-time/tools/harness/eye_strip_dark.qml "$PREV/eye_strip_dark.png" 1920 1080

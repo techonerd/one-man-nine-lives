@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="80" viewBox="0 0 60 80">
+  <!-- Rounded Curled Batting Paw (pivot wrist at 16, 60) -->
+  <ellipse cx="16" cy="68" rx="8" ry="7" fill="#F5F5F5" stroke="#121212" stroke-width="2.5"/>
+  <path d="M12 67 Q16 71 20 67" fill="none" stroke="#121212" stroke-width="1" stroke-linecap="round"/>
+  <line x1="16" y1="71" x2="16" y2="74" stroke="#121212" stroke-width="1" stroke-linecap="round"/>
+</svg>

@@ -30,6 +30,13 @@ A KDE Plasma 6 suite by one man and his cat, Casper. Every component name balanc
 ## Writing style for Whiskers messages
 Plain words for a non-expert: *what happened*, *what it means for you*, *what to do*. No jargon in titles. Exact commands go in `fix`, raw log lines in `detail`.
 
+## UI/UX work: the plasma-polish skill
+Claude Code and Antigravity share one skill, `claude/plasma-polish/skills/plasma-polish/` (linked from `.claude/skills/` and `.agents/skills/`). Use it for any review or change to how something looks or behaves. The usual split: one agent does the heavy `polish`/`new` work from a `tasks/` brief; the other runs `review <task>` on the diff before the owner commits. Its checkers are read-only:
+```bash
+python3 -I claude/plasma-polish/skills/plasma-polish/scripts/plasmalint.py <folder>
+python3 -I claude/plasma-polish/skills/plasma-polish/scripts/contrast.py [scheme.colors ...]
+```
+
 ## How to test without installing
 ```bash
 export WHISKERS_STATE_DIR=/tmp/wk/state WHISKERS_CONFIG_DIR=/tmp/wk/conf WHISKERS_UNIT_DIR=/tmp/wk/units
@@ -38,5 +45,6 @@ whiskers/bin/whiskers plugins --json | jq .
 /usr/lib/qt6/bin/qmllint -I /usr/lib/x86_64-linux-gnu/qt6/qml whiskers/widget/contents/ui/*.qml   # "unqualified i18n/root" warnings are expected
 python3 -I icons/thumbs-and-paws/tools/generate.py && icons/thumbs-and-paws/tools/preview.sh
 python3 -I color-scheme/tabby-and-tweed/tools/generate.py && python3 -I color-scheme/tabby-and-tweed/tools/preview.py
+QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input sddm/doorstep/tools/tst_casper_grabber.qml -import /usr/lib/x86_64-linux-gnu/qt6/qml   # Doorstep cat follows and grabs the pointer
 ./build.sh
 ```

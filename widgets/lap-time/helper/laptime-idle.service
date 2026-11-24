@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+[Unit]
+Description=Lap Time idle tracker (real keyboard and mouse input only)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/laptime-idle 60
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

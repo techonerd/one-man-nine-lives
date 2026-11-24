@@ -19,12 +19,16 @@ Item {
         property string background: "background.svg"
         property string clockFormat: "hh:mm"
         property string dateFormat: "dddd, MMMM d"
+        property int fontSize: 11
+        property string playfulCat: "true"
+        property string grabState: ""
     }
 
     property QtObject sddm: QtObject {
         property bool canSuspend: true
         property bool canReboot: true
         property bool canPowerOff: true
+        property bool canHibernate: true
         signal loginFailed()
         signal loginSucceeded()
         signal informationMessage(string message)
@@ -49,6 +53,9 @@ Item {
         property int lastIndex: 0
         ListElement {
             name: "Plasma (Wayland)"
+        }
+        ListElement {
+            name: "Plasma (X11)"
         }
     }
 

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="200" viewBox="0 0 160 200">
+  <!-- Floor Shadow -->
+  <ellipse cx="80" cy="186" rx="64" ry="13" fill="rgba(0, 0, 0, 0.45)"/>
+
+  <!-- Pear-shaped Torso -->
+  <path d="M42 178 C30 138 46 96 66 72 C74 62 90 62 98 72 C118 96 134 138 122 178 C114 188 50 188 42 178 Z"
+        fill="#F5F5F5" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+
+  <!-- Right Front Paw (resting) -->
+  <ellipse cx="94" cy="182" rx="9.5" ry="6.5" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+</svg>

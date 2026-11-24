@@ -6,7 +6,7 @@ A KDE Plasma 6 suite made by one man and his cat, Casper. Every piece is named h
 | Component | Name | Human side | Cat side | Folder | KDE Store category | Status |
 |---|---|---|---|---|---|---|
 | Global theme | **One Man Nine Lives** | one man | nine lives | [`look-and-feel/one-man-nine-lives`](look-and-feel/one-man-nine-lives) | Plasma 6 Global Themes | ✅ ready (Light + Dark) |
-| Lock screen | **Catnap** | a quick nap at the desk | the 16th nap of the day | inside the global theme | – | planned |
+| Lock screen | **Catnap** | a quick nap at the desk | the 16th nap of the day | [`look-and-feel/one-man-nine-lives/catnap`](look-and-feel/one-man-nine-lives/catnap) | Plasma 6 Wallpapers | ✅ ready (lock-screen wallpaper for the Breeze lock screen) |
 | Splash screen | **Morning Stretch** | waking up | the first big stretch | [`splash/morning-stretch`](splash/morning-stretch) | Plasma 6 Splashscreens | ✅ ready |
 | System watch | **Whiskers** | the beard you forgot to trim | senses trouble before it lands | [`whiskers`](whiskers) | Plasma 6 Widgets + CLI | ✅ ready |
 | Colour schemes | **Tabby & Tweed** (Light + Dark) | a tweed jacket | a tabby coat | [`color-scheme/tabby-and-tweed`](color-scheme/tabby-and-tweed) | Plasma 6 Color Schemes | ✅ ready |
@@ -37,7 +37,7 @@ Details are in each folder's README.
 
 ## Repository layout
 ```
-look-and-feel/one-man-nine-lives/   global themes Light + Dark (+ Catnap later)  ready
+look-and-feel/one-man-nine-lives/   global themes Light + Dark + Catnap         ready
 splash/morning-stretch/             splash screen                                ready
 whiskers/                           system watch: CLI, plugins, live watch, widget  ready
 color-scheme/tabby-and-tweed/       light + dark colour schemes + generator      ready

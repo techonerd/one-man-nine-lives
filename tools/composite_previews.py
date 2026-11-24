@@ -5,7 +5,6 @@
 
 Creates:
   - sddm/doorstep/preview/preview.png (and doorstep/preview.png)
-  - look-and-feel/one-man-nine-lives/preview/preview-lockscreen.png
 From the real 2560x1600 offscreen renders of:
   - dark
   - light
@@ -75,7 +74,6 @@ def make_preview_composite(dark_path: Path, light_path: Path, error_path: Path, 
 
 def main():
     sddm_prev_dir = ROOT / "sddm" / "doorstep" / "preview"
-    catnap_prev_dir = ROOT / "look-and-feel" / "one-man-nine-lives" / "preview"
 
     # Doorstep
     doorstep_out = sddm_prev_dir / "preview.png"
@@ -89,16 +87,6 @@ def main():
     )
     # Also sync metadata preview for SDDM
     shutil.copyfile(doorstep_out, ROOT / "sddm" / "doorstep" / "doorstep" / "preview.png")
-
-    # Catnap
-    make_preview_composite(
-        catnap_prev_dir / "catnap_dark.png",
-        catnap_prev_dir / "catnap_light.png",
-        catnap_prev_dir / "catnap_error.png",
-        catnap_prev_dir / "catnap_capslock.png",
-        catnap_prev_dir / "preview-lockscreen.png",
-        "Catnap Lock Screen UI"
-    )
 
 
 if __name__ == "__main__":

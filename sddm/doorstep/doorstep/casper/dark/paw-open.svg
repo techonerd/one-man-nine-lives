@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="80" viewBox="0 0 60 80">
+  <!-- Open Reaching Paw (pivot wrist at 16, 60) -->
+  <ellipse cx="16" cy="68" rx="7.5" ry="5.5" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+  <circle cx="9" cy="64" r="2.5" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+  <circle cx="14" cy="61" r="2.5" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+  <circle cx="19" cy="61" r="2.5" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+  <circle cx="24" cy="64" r="2.5" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+  <ellipse cx="16" cy="68" rx="4" ry="2.8" fill="rgba(0, 0, 0, 0.08)"/>
+</svg>

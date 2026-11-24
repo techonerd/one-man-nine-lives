@@ -31,6 +31,8 @@ KCM.SimpleKCM {
     property bool cfg_only_this_screenDefault: true
     property alias cfg_mouse_actions: mouseActionsCheckBox.checked
     property bool cfg_mouse_actionsDefault: true
+    property alias cfg_middle_click_close: middleClickCloseCheckBox.checked
+    property bool cfg_middle_click_closeDefault: false
     property alias cfg_icon_size: iconSizeSpinBox.value
     property int cfg_icon_sizeDefault: 100
 
@@ -109,7 +111,12 @@ KCM.SimpleKCM {
 
         QQC2.CheckBox {
             id: mouseActionsCheckBox
-            text: i18n("Double-click to maximise or restore, middle-click to close")
+            text: i18n("Double-click to maximise or restore")
+        }
+
+        QQC2.CheckBox {
+            id: middleClickCloseCheckBox
+            text: i18n("Middle-click to close")
         }
 
         Item {
@@ -120,10 +127,10 @@ KCM.SimpleKCM {
             id: emptyModeCombo
             Kirigami.FormData.label: i18n("When no window is active:")
             model: [
-                i18n("Current Activity Name (or Desktop)"),
-                i18n("Fixed \"Desktop\" label"),
+                i18n("Current activity name (or Desktop)"),
+                i18n("The word “Desktop”"),
                 i18n("Custom text"),
-                i18n("Blank (hide label)")
+                i18n("Nothing")
             ]
         }
 

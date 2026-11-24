@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="164" height="96" viewBox="0 0 164 96">
+  <g transform="translate(-46, -30)">
+    <!-- Floor Shadow -->
+    <ellipse cx="128" cy="112" rx="80" ry="14" fill="rgba(0, 0, 0, 0.45)"/>
+
+    <!-- Rounded Bean Body Arch -->
+    <path d="M66 92 C46 64 68 30 120 30 C176 30 204 60 194 92 C184 114 146 118 106 114 C82 112 70 102 66 92 Z"
+          fill="#F5F5F5" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+
+    <!-- Tucked Front Paws -->
+    <ellipse cx="106" cy="94" rx="11" ry="8" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+    <ellipse cx="122" cy="94" rx="10" ry="7.5" fill="#F5F5F5" stroke="none" stroke-width="0"/>
+  </g>
+</svg>

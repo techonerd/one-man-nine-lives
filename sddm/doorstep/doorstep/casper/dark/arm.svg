@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="80" viewBox="0 0 60 80">
+  <!-- Reaching Arm (pivot shoulder at 45, 10 to wrist at 16, 60) -->
+  <path d="M47 10 C41 28 32 46 19 58 C15 62 13 60 14 56 C23 42 34 24 43 9 Z"
+        fill="#F5F5F5" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+</svg>

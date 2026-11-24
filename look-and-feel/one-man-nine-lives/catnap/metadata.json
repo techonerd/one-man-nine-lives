@@ -1,0 +1,17 @@
+{
+    "KPackageStructure": "Plasma/Wallpaper",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "techonerd"
+            }
+        ],
+        "Description": "Casper asleep in the corner; lock-screen wallpaper of One Man Nine Lives",
+        "Id": "com.github.techonerd.catnap",
+        "License": "GPL-3.0-or-later",
+        "Name": "Catnap",
+        "Version": "0.1.0",
+        "Website": "https://github.com/techonerd/one-man-nine-lives"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

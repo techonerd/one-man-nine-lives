@@ -9,10 +9,27 @@ A panel widget that counts how long you've been working. When it's break time, C
 ## Breaks
 | Break | Default | Based on | Overlay |
 |---|---|---|---|
-| **Eye break** | 20 s every 20 min | 20-20-20 rule (look about 6 m / 20 ft away) | Casper walks across the bottom of the screen, with a short countdown. Click-through, so it never blocks your work. |
-| **Stretch break** | 5 min every 50 min | Common ergonomics guidance (a short break every 30–60 min) | Dimmed full-screen glass. Casper sits in the middle, stretches, then naps, with a countdown and a stretch tip. |
+| **Eye break** | 20 s every 20 min | 20-20-20 rule (look about 6 m / 20 ft away) | Smaller card on the active screen that does not dim your work, with a short countdown and eye-resting tip. |
+| **Stretch break** | 5 min every 50 min | Common ergonomics guidance (a short break every 30–60 min) | Dimmed full-screen glass covering every screen. Casper sits in the middle, stretches, then naps, with a countdown and a stretch tip. |
 
 Both breaks are configurable: on/off, interval and length (1–240 min), plus a custom name per break.
+
+## Idle tracking (laptime-idle helper)
+Wayland does not allow ordinary desktop applications or panel widgets to poll system-wide idle time directly. Lap Time counts all unlocked time as active work unless the small `laptime-idle` helper daemon is active.
+
+The helper connects to the compositor via the Wayland `ext-idle-notify-v1` protocol and writes an idle timestamp to `$XDG_RUNTIME_DIR/laptime-idle` when true keyboard/mouse input stops.
+
+To compile and enable the helper:
+```bash
+cd widgets/lap-time/helper
+cmake -B build -S .
+cmake --build build
+mkdir -p ~/.local/bin ~/.config/systemd/user
+cp build/laptime-idle ~/.local/bin/
+cp laptime-idle.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now laptime-idle.service
+```
 
 ## Rules for being a good cat
 - **Snooze:** 5 min by default, at most 3 times. **Skip** is always one click away, or **Esc**. Breaks are never forced.

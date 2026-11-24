@@ -5,7 +5,7 @@
 # User paths only. No sudo; nothing outside your home directory is touched.
 #
 # Usage:
-#   ./install.sh [--dry-run] [--apply light|dark] [--auto] [--with-catnap] [component ...]
+#   ./install.sh [--dry-run] [--apply light|dark] [--auto] [component ...]
 #
 # Undo:
 #   ./uninstall.sh
@@ -24,7 +24,6 @@ PREV_INI="${STATE_DIR}/previous.ini"
 
 apply=""
 auto=0
-with_catnap=0
 dry_run=0
 selected_components=()
 
@@ -36,7 +35,6 @@ Options:
   --dry-run             Show what would be installed/executed without writing files
   --apply <light|dark>  Install and apply theme variant immediately
   --auto                Enable automatic Light/Dark switching with time of day
-  --with-catnap         Install Catnap lock screen directly into global theme
   -h, --help            Show this help message
 
 Components:
@@ -57,8 +55,6 @@ while (( $# )); do
       shift ;;
     --auto)
       auto=1 ;;
-    --with-catnap)
-      with_catnap=1 ;;
     -h|--help)
       usage; exit 0 ;;
     -*)
@@ -131,6 +127,7 @@ fi
 # Clean override: Remove old hand-installed Night Shift files from user paths
 echo "Cleaning old hand-installed copies..."
 old_paths=(
+  "${DATA_DIR}/wallpapers/com.github.techonerd.catnap"
   "${DATA_DIR}/konsole/Night Shift.profile"
   "${DATA_DIR}/aurorae/themes/WindowPerch"
   "${DATA_DIR}/aurorae/themes/WindowPerchLight"
@@ -276,11 +273,8 @@ if (( install_themes )); then
   echo "Installing One Man Nine Lives global themes (Light & Dark)..."
   install_dir "look-and-feel/one-man-nine-lives/light" "$DATA_DIR/plasma/look-and-feel/com.github.techonerd.onemanninelives.light"
   install_dir "look-and-feel/one-man-nine-lives/dark" "$DATA_DIR/plasma/look-and-feel/com.github.techonerd.onemanninelives.dark"
-
-  if (( ! with_catnap && ! dry_run )); then
-    rm -rf "$DATA_DIR/plasma/look-and-feel/com.github.techonerd.onemanninelives.light/contents/lockscreen"
-    rm -rf "$DATA_DIR/plasma/look-and-feel/com.github.techonerd.onemanninelives.dark/contents/lockscreen"
-  fi
+  echo "Installing Catnap lock-screen wallpaper..."
+  install_dir "look-and-feel/one-man-nine-lives/catnap" "$DATA_DIR/plasma/wallpapers/com.github.techonerd.catnap"
 fi
 
 # 5. Plasma Desktop Theme: Night Shift
@@ -319,7 +313,23 @@ if (( install_widgets )); then
   install_dir "widgets/lap-time" "$DATA_DIR/plasma/plasmoids/com.github.techonerd.laptime"
   if (( ! dry_run )); then
     rm -rf "$DATA_DIR/plasma/plasmoids/com.github.techonerd.laptime/tools" "$DATA_DIR/plasma/plasmoids/com.github.techonerd.laptime/preview" \
-           "$DATA_DIR/plasma/plasmoids/com.github.techonerd.laptime/README.md" "$DATA_DIR/plasma/plasmoids/com.github.techonerd.laptime/REVIEW.md"
+           "$DATA_DIR/plasma/plasmoids/com.github.techonerd.laptime/README.md" "$DATA_DIR/plasma/plasmoids/com.github.techonerd.laptime/REVIEW.md" \
+           "$DATA_DIR/plasma/plasmoids/com.github.techonerd.laptime/helper"
+  fi
+
+  # Lap Time idle helper: real keyboard/mouse idle time on Wayland (user-level, no root)
+  echo "Building Lap Time idle helper..."
+  if (( dry_run )); then
+    echo "  [dry-run] Would build widgets/lap-time/helper and install laptime-idle + laptime-idle.service"
+  elif cmake -S widgets/lap-time/helper -B widgets/lap-time/helper/build -DCMAKE_BUILD_TYPE=Release >/dev/null \
+       && cmake --build widgets/lap-time/helper/build >/dev/null; then
+    install_file "widgets/lap-time/helper/build/laptime-idle" "$BIN_DIR/laptime-idle" 755
+    install_file "widgets/lap-time/helper/laptime-idle.service" "$CONFIG_DIR/systemd/user/laptime-idle.service" 644
+    systemctl --user daemon-reload
+    systemctl --user enable --now laptime-idle.service
+    systemctl --user restart laptime-idle.service
+  else
+    echo "  WARNING: could not build the idle helper (needs cmake, gcc, libwayland-dev). Lap Time will count all unlocked time as work."
   fi
 fi
 
@@ -471,24 +481,19 @@ Components ready to use:
 
   Install (system-wide):
     sudo cp -r sddm/doorstep/doorstep /usr/share/sddm/themes/
-    sudo mkdir -p /etc/sddm.conf.d && echo -e "[Theme]\nCurrent=doorstep" | sudo tee /etc/sddm.conf.d/20-theme.conf
+    Then System Settings → Login Screen (SDDM) → Doorstep → Apply
+    (Plasma's kde_settings.conf overrides other sddm.conf.d files, so select it there.)
 
   Uninstall / Undo:
-    sudo rm -rf /usr/share/sddm/themes/doorstep /etc/sddm.conf.d/20-theme.conf
+    Select your previous theme in Login Screen (SDDM), then:
+    sudo rm -rf /usr/share/sddm/themes/doorstep
 
 ------------------------------------------------------------------
- Catnap (Lock Screen) — high risk, commands only:
+ Catnap (lock-screen wallpaper):
 ------------------------------------------------------------------
-  Safe test in window (does not lock system):
-    ./look-and-feel/one-man-nine-lives/test-lockscreen.sh         # dark
-    ./look-and-feel/one-man-nine-lives/test-lockscreen.sh light   # light
-
-  Install into global theme (only after window test):
-    cp -r look-and-feel/one-man-nine-lives/dark/contents/lockscreen ~/.local/share/plasma/look-and-feel/com.github.techonerd.onemanninelives.dark/contents/
-    cp -r look-and-feel/one-man-nine-lives/light/contents/lockscreen ~/.local/share/plasma/look-and-feel/com.github.techonerd.onemanninelives.light/contents/
-
-  Emergency escape hatch if testing full lock:
-    Switch to TTY3 (Ctrl+Alt+F3), log in, and run: loginctl unlock-session
+  Installed to ~/.local/share/plasma/wallpapers/com.github.techonerd.catnap.
+  Use it: System Settings → Screen Locking → Appearance: Configure… → Wallpaper type: Catnap
+  (Note: Switch the wallpaper *type* dropdown to 'Catnap'; Plasma's own Breeze lock screen draws the clock and password field.)
 
 ------------------------------------------------------------------
  Undo / Uninstall:

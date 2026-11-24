@@ -25,8 +25,12 @@ def main():
     popup_dark = Image.open(PREVIEW_DIR / "popup_dark.png").convert("RGBA")
     popup_light = Image.open(PREVIEW_DIR / "popup_light.png").convert("RGBA")
     eye_dark = Image.open(PREVIEW_DIR / "eye_strip_dark.png").convert("RGBA")
+    eye_light = Image.open(PREVIEW_DIR / "eye_strip_light.png").convert("RGBA")
     stretch_dark = Image.open(PREVIEW_DIR / "stretch_overlay_dark.png").convert("RGBA")
     stretch_light = Image.open(PREVIEW_DIR / "stretch_overlay_light.png").convert("RGBA")
+
+    popup_large_path = PREVIEW_DIR / "popup_large_font.png"
+    popup_large = Image.open(popup_large_path).convert("RGBA") if popup_large_path.exists() else None
 
     # Canvas 2560 x 1440
     w, h = 2560, 1440
@@ -36,7 +40,7 @@ def main():
     # Top banner / title
     draw.text((40, 30), "Lap Time — Break Reminder with Casper Overlay (One Man Nine Lives)", fill=(230, 230, 230, 255))
 
-    # Top Row: Panels (Dark & Light) and Popups (Dark & Light)
+    # Top Row: Panels (Dark & Light) and Popups (Dark & Light & 1.5x font)
     # 1. Panel Dark & Light
     canvas.paste(panel_dark, (40, 80))
     draw.text((40, 145), "Compact Panel (Dark Mode)", fill=(160, 160, 160, 255))
@@ -46,48 +50,49 @@ def main():
 
     # 2. Popups (Dark & Light)
     canvas.paste(popup_dark, (40, 180))
-    canvas.paste(popup_light, (490, 180))
+    draw.text((40, 690), "Popup Dialog (Dark)", fill=(160, 160, 160, 255))
 
-    # 3. Eye Break Strip (Bottom strip crop, placed on the right side)
-    # Eye strip is at y: 990..1080 of eye_dark (1920x1080)
-    eye_crop_dark = eye_dark.crop((0, 990, 1920, 1080)).resize((1500, 75), Image.Resampling.LANCZOS)
-    canvas.paste(eye_crop_dark, (960, 80))
-    draw.rectangle([959, 79, 960 + 1500, 80 + 75], outline=(60, 60, 60, 255), width=1)
-    draw.text((960, 165), "Eye Break: 20-20-20 Rule Frameless Click-Through Strip (Casper Walking)", fill=(200, 200, 200, 255))
+    canvas.paste(popup_light, (490, 180))
+    draw.text((490, 690), "Popup Dialog (Light, contrast-verified text)", fill=(160, 160, 160, 255))
+
+    # 3. Eye Break Card (Smaller card without dimming backdrop)
+    sw, sh = 740, 416
+    eye_dark_scaled = eye_dark.resize((sw, sh), Image.Resampling.LANCZOS)
+    eye_light_scaled = eye_light.resize((sw, sh), Image.Resampling.LANCZOS)
+
+    canvas.paste(eye_dark_scaled, (960, 80))
+    draw.rectangle([959, 79, 960 + sw, 80 + sh], outline=(60, 60, 60, 255), width=1)
+    draw.text((960, 505), "Eye Break: Compact Card (Dark Mode: Non-dimming over desktop)", fill=(200, 200, 200, 255))
+
+    canvas.paste(eye_light_scaled, (1740, 80))
+    draw.rectangle([1739, 79, 1740 + sw, 80 + sh], outline=(180, 180, 180, 255), width=1)
+    draw.text((1740, 505), "Eye Break: Compact Card (Light Mode: Non-dimming over desktop)", fill=(200, 200, 200, 255))
 
     # 4. Stretch Break Overlay (Scaled representations: Dark on left-middle, Light on right-middle)
-    sw, sh = 740, 416
     stretch_dark_scaled = stretch_dark.resize((sw, sh), Image.Resampling.LANCZOS)
     stretch_light_scaled = stretch_light.resize((sw, sh), Image.Resampling.LANCZOS)
 
-    canvas.paste(stretch_dark_scaled, (960, 210))
-    draw.rectangle([959, 209, 960 + sw, 210 + sh], outline=(70, 70, 70, 255), width=1)
-    draw.text((960, 635), "Fullscreen Stretch Break (Dark Mode: Casper napping, timer, Snooze/Skip/I'm on it)", fill=(200, 200, 200, 255))
+    canvas.paste(stretch_dark_scaled, (960, 535))
+    draw.rectangle([959, 534, 960 + sw, 535 + sh], outline=(70, 70, 70, 255), width=1)
+    draw.text((960, 960), "Fullscreen Stretch Break (Dark Mode: Covers all screens, Snooze count, Return/Esc)", fill=(200, 200, 200, 255))
 
-    canvas.paste(stretch_light_scaled, (1740, 210))
-    draw.rectangle([1739, 209, 1740 + sw, 210 + sh], outline=(180, 180, 180, 255), width=1)
-    draw.text((1740, 635), "Fullscreen Stretch Break (Light Mode: Off-white Casper + Outline, tips & timer)", fill=(200, 200, 200, 255))
-
-    # Inset for Eye Break Light mode
-    eye_light = Image.open(PREVIEW_DIR / "eye_strip_light.png").convert("RGBA")
-    eye_crop_light = eye_light.crop((0, 990, 1920, 1080)).resize((1500, 75), Image.Resampling.LANCZOS)
-    canvas.paste(eye_crop_light, (960, 675))
-    draw.rectangle([959, 674, 960 + 1500, 675 + 75], outline=(180, 180, 180, 255), width=1)
-    draw.text((960, 760), "Eye Break Strip (Light Mode: High contrast text & Casper outline)", fill=(200, 200, 200, 255))
+    canvas.paste(stretch_light_scaled, (1740, 535))
+    draw.rectangle([1739, 534, 1740 + sw, 535 + sh], outline=(180, 180, 180, 255), width=1)
+    draw.text((1740, 960), "Fullscreen Stretch Break (Light Mode: Covers all screens, high-contrast text)", fill=(200, 200, 200, 255))
 
     # Bottom summary panel
-    draw.rectangle([40, 800, 2500, 1400], fill=(28, 28, 28, 255), outline=(50, 50, 50, 255), width=1)
-    draw.text((70, 830), "Ergonomics & Design Highlights:", fill=(232, 162, 86, 255))
+    draw.rectangle([40, 990, 2500, 1400], fill=(28, 28, 28, 255), outline=(50, 50, 50, 255), width=1)
+    draw.text((70, 1010), "Ergonomics & Design Highlights (UI Polish Completed):", fill=(232, 162, 86, 255))
     notes = [
-        "• Respects Work Time Only: Pauses automatically when user is idle > 1 min or screen is locked (checked via powermanagement UserActivity & ScreenSaver GetActive).",
-        "• Auto Break Detection: If idle for longer than the break duration (e.g. 5 min away from desk), automatically counts the break as taken.",
-        "• Do Not Disturb Integration: Respects Plasma Do Not Disturb mode (Inhibited property), silencing fullscreen overlays during presentations or calls.",
-        "• Non-Forced Ergonomics: Always offers Snooze (up to max configured), Skip, or instant Escape key bypass.",
-        "• Public Plasma 6 APIs Only: Clean architecture with PlasmaComponents3, Kirigami, Plasma5Support data engines. Zero private modules.",
-        "• Authentic Casper Mono Palette: Off-white coat (#F5F5F5) in both modes; outline (#1C1C1C) on light backgrounds; frosted glass MultiEffect blur."
+        "• L1 (Readability): Countdowns, Taken & Skipped counts render in Kirigami.Theme.textColor (>10:1 contrast on Breeze Light). Accent kept for progress ring & bars.",
+        "• L2 (Font Scaling): All fixed font pointSizes replaced with Heading levels and Kirigami.Theme.smallFont. Card heights are implicit to prevent clipping.",
+        "• L3 (Idle Detection): Short 'Tracking' badge; Kirigami.InlineMessage warning if laptime-idle daemon is missing, linking to fix documentation.",
+        "• L4 (Keyboard & Screens): Return completes break ('I'm on it' has initial focus); Esc skips. Stretch breaks cover all screens; Snooze displays count left.",
+        "• L5 & L6 (HIG Polish): Removed redundant theme overrides. Standardized button title casing ('Take Now', 'Pause for 1 Hour') and i18nc unit translations.",
+        "• Decisions 1 & 2: Stretch breaks cover every screen with full-screen glass; eye breaks display a compact non-dimming card on active screen only."
     ]
     for i, note in enumerate(notes):
-        draw.text((70, 880 + (i * 45)), note, fill=(230, 230, 230, 255))
+        draw.text((70, 1055 + (i * 45)), note, fill=(230, 230, 230, 255))
 
     out_file = PREVIEW_DIR / "preview.png"
     canvas.save(out_file, format="PNG", optimize=True)

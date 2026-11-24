@@ -2,40 +2,21 @@
   <circle cx="64" cy="64" r="62" fill="#E2E2E2" stroke="rgba(0, 0, 0, 0.12)" stroke-width="1.5"/>
   <g transform="translate(0, 2)">
     <g transform="translate(14, 10)">
-    <!-- Mid-tone background pad (light mode) -->
     <ellipse cx="50" cy="68" rx="46" ry="34" fill="#E2E2E2" opacity="0.75"/>
-
-    <!-- Shadow -->
     <ellipse cx="50" cy="106" rx="44" ry="10" fill="rgba(0, 0, 0, 0.15)"/>
-
-    <!-- Curled Tail -->
     <path d="M72 100 C98 108 102 90 92 80 C86 74 80 78 83 85 C86 93 78 98 62 95 Z"
           fill="#F5F5F5" stroke="#121212" stroke-width="3.2" stroke-linejoin="round"/>
-
-    <!-- Rounded Body -->
     <path d="M22 100 C14 74 24 48 38 34 C46 26 58 26 66 34 C80 48 90 74 82 100 C74 108 30 108 22 100 Z"
           fill="#F5F5F5" stroke="#121212" stroke-width="3.2" stroke-linejoin="round"/>
-
-    <!-- Front Paws -->
     <ellipse cx="42" cy="102" rx="7.5" ry="5.5" fill="#F5F5F5" stroke="#121212" stroke-width="3.2"/>
     <ellipse cx="58" cy="102" rx="7.5" ry="5.5" fill="#F5F5F5" stroke="#121212" stroke-width="3.2"/>
-
-    <!-- Rounded Head -->
     <circle cx="50" cy="30" r="19" fill="#F5F5F5" stroke="#121212" stroke-width="3.2"/>
-
-    <!-- Left Ear with signature notch -->
     <path d="M36 22 L39 4 C40 2 42 2 43 4 L50 14 Z" fill="#F5F5F5" stroke="#121212" stroke-width="3.2"/>
     <path d="M38 18 L40 7 L46 15 Z" fill="rgba(0, 0, 0, 0.10)"/>
-
-    <!-- Right Ear with signature notch -->
     <path d="M52 14 L59 2 C61 1 62 2 63 4 L66 22 Z" fill="#F5F5F5" stroke="#121212" stroke-width="3.2"/>
     <path d="M54 14 L60 6 L63 19 Z" fill="rgba(0, 0, 0, 0.10)"/>
-
-    <!-- Friendly Eyes -->
     <ellipse cx="44" cy="28" rx="2.5" ry="3.5" fill="#121212"/>
     <ellipse cx="56" cy="28" rx="2.5" ry="3.5" fill="#121212"/>
-
-    <!-- Nose & Smile -->
     <polygon points="49,34 51,34 50,35.5" fill="#121212"/>
     <path d="M47 37 Q50 39 53 37" fill="none" stroke="#121212" stroke-width="1" stroke-linecap="round"/>
   </g>

@@ -58,45 +58,45 @@ KCM.SimpleKCM {
     property int cfg_statsBreaksSkippedDefault: 0
 
     Kirigami.FormLayout {
-        // Section: Eye Break
+        // Eye break
         QQC2.CheckBox {
             id: eyeEnabledCheckBox
             Kirigami.FormData.label: i18n("Eye break:")
-            text: i18n("Enable 20-20-20 eye break reminders")
+            text: i18n("Remind me")
         }
 
         QQC2.TextField {
             id: eyeLabelField
-            Kirigami.FormData.label: i18n("Label:")
+            Kirigami.FormData.label: i18n("Name:")
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 12
             enabled: eyeEnabledCheckBox.checked
             placeholderText: i18n("Eye break")
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Every:")
+            Kirigami.FormData.label: i18n("Timing:")
             spacing: Kirigami.Units.smallSpacing
             enabled: eyeEnabledCheckBox.checked
 
+            QQC2.Label { text: i18nc("every N minutes", "every") }
             QQC2.SpinBox {
                 id: eyeIntervalSpinBox
+                Accessible.name: i18nc("@label:spinbox", "Eye break interval")
                 from: 1
                 to: 240
                 stepSize: 5
+                editable: true
                 textFromValue: value => i18n("%1 min", value)
                 valueFromText: text => parseInt(text, 10) || 20
             }
-        }
-
-        RowLayout {
-            Kirigami.FormData.label: i18n("Duration:")
-            spacing: Kirigami.Units.smallSpacing
-            enabled: eyeEnabledCheckBox.checked
-
+            QQC2.Label { text: i18nc("for N seconds/minutes", "for") }
             QQC2.SpinBox {
                 id: eyeLengthSpinBox
+                Accessible.name: i18nc("@label:spinbox", "Eye break duration")
                 from: 5
                 to: 300
                 stepSize: 5
+                editable: true
                 textFromValue: value => i18n("%1 sec", value)
                 valueFromText: text => parseInt(text, 10) || 20
             }
@@ -106,45 +106,45 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
         }
 
-        // Section: Stretch Break
+        // Stretch break
         QQC2.CheckBox {
             id: stretchEnabledCheckBox
             Kirigami.FormData.label: i18n("Stretch break:")
-            text: i18n("Enable full stretch break reminders")
+            text: i18n("Remind me")
         }
 
         QQC2.TextField {
             id: stretchLabelField
-            Kirigami.FormData.label: i18n("Label:")
+            Kirigami.FormData.label: i18n("Name:")
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 12
             enabled: stretchEnabledCheckBox.checked
             placeholderText: i18n("Stretch break")
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Every:")
+            Kirigami.FormData.label: i18n("Timing:")
             spacing: Kirigami.Units.smallSpacing
             enabled: stretchEnabledCheckBox.checked
 
+            QQC2.Label { text: i18nc("every N minutes", "every") }
             QQC2.SpinBox {
                 id: stretchIntervalSpinBox
+                Accessible.name: i18nc("@label:spinbox", "Stretch break interval")
                 from: 1
                 to: 240
                 stepSize: 5
+                editable: true
                 textFromValue: value => i18n("%1 min", value)
                 valueFromText: text => parseInt(text, 10) || 50
             }
-        }
-
-        RowLayout {
-            Kirigami.FormData.label: i18n("Duration:")
-            spacing: Kirigami.Units.smallSpacing
-            enabled: stretchEnabledCheckBox.checked
-
+            QQC2.Label { text: i18nc("for N seconds/minutes", "for") }
             QQC2.SpinBox {
                 id: stretchLengthSpinBox
+                Accessible.name: i18nc("@label:spinbox", "Stretch break duration")
                 from: 1
                 to: 60
                 stepSize: 1
+                editable: true
                 textFromValue: value => i18n("%1 min", value)
                 valueFromText: text => parseInt(text, 10) || 5
             }
@@ -154,46 +154,35 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
         }
 
-        // Section: Behavior & Ergonomics
         RowLayout {
-            Kirigami.FormData.label: i18n("Snooze duration:")
+            Kirigami.FormData.label: i18n("Snooze:")
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.SpinBox {
                 id: snoozeSpinBox
+                Accessible.name: i18nc("@label:spinbox", "Snooze duration")
                 from: 1
                 to: 30
-                stepSize: 1
+                editable: true
                 textFromValue: value => i18n("%1 min", value)
                 valueFromText: text => parseInt(text, 10) || 5
             }
-        }
-
-        RowLayout {
-            Kirigami.FormData.label: i18n("Maximum snoozes:")
-            spacing: Kirigami.Units.smallSpacing
-
+            QQC2.Label { text: i18nc("snooze N minutes, up to M times", "up to") }
             QQC2.SpinBox {
                 id: maxSnoozesSpinBox
+                Accessible.name: i18nc("@label:spinbox", "Maximum snooze count")
                 from: 1
                 to: 10
-                stepSize: 1
-                textFromValue: value => i18n("%1 times", value)
+                editable: true
+                textFromValue: value => i18np("%1 time", "%1 times", value)
                 valueFromText: text => parseInt(text, 10) || 3
             }
         }
 
         QQC2.CheckBox {
             id: respectDndCheckBox
-            Kirigami.FormData.label: i18n("Disturbances:")
-            text: i18n("Respect Do Not Disturb and Screen Lock")
-        }
-
-        Kirigami.InlineMessage {
-            Layout.fillWidth: true
-            type: Kirigami.MessageType.Information
-            text: i18n("Lap Time tracks your lap time and reminds you when it is time to stretch. Breaks are never forced: you can always snooze, skip, or press Esc.")
-            visible: true
+            Kirigami.FormData.label: i18n("Pause during:")
+            text: i18n("Do Not Disturb and screen lock")
         }
     }
 }

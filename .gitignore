@@ -3,3 +3,4 @@ dist/
 __pycache__/
 *.pyc
 window-decoration/window-perch/build/
+widgets/lap-time/helper/build/
